@@ -1,0 +1,20 @@
+@startuml Nivel2_Container
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+
+title Nível 2 - Diagrama de Container | Sistema CatólicaReserva
+
+Person(usuario, "Aluno / Professor", "Reserva salas e consulta horários.")
+Person(admin, "Administrador", "Cadastra salas e acompanha reservas.")
+
+System_Boundary(catolicaReserva, "CatólicaReserva") {
+    Container(webapp, "Aplicação Web (Cliente)", "React", "Interface onde os usuários consultam a disponibilidade e fazem reservas, e o administrador cadastra as salas.")
+    Container(api, "Servidor / API REST", "Node.js + Express", "Aplica as regras de negócio: valida conflitos de horário, cria e cancela reservas e autentica os usuários.")
+    ContainerDb(db, "Banco de Dados", "MySQL", "Armazena os usuários, as salas/laboratórios e as reservas.")
+}
+
+Rel(usuario, webapp, "Acessa e faz reservas usando", "HTTPS")
+Rel(admin, webapp, "Cadastra ambientes usando", "HTTPS")
+Rel(webapp, api, "Faz requisições para", "JSON / HTTPS")
+Rel(api, db, "Lê e grava dados usando", "SQL")
+
+@enduml

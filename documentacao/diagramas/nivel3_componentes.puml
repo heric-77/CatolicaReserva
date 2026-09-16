@@ -1,0 +1,40 @@
+@startuml Nivel3_Componentes
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+
+title Nível 3 - Diagrama de Componentes | Servidor / API (CatólicaReserva)
+
+Container(webapp, "Aplicação Web (Cliente)", "React", "Faz as requisições do usuário.")
+ContainerDb(db, "Banco de Dados", "MySQL", "Armazena usuários, salas e reservas.")
+
+Container_Boundary(api, "Servidor / API REST (Node.js + Express)") {
+    Component(reservaController, "ReservaController", "Express", "Recebe as requisições de reserva (criar, cancelar, listar).")
+    Component(salaController, "SalaController", "Express", "Recebe as requisições de cadastro e consulta de salas.")
+    Component(authController, "AuthController", "Express", "Recebe o login e autentica o usuário.")
+
+    Component(reservaService, "ReservaService", "Node.js", "Regras de negócio das reservas; valida conflitos de horário.")
+    Component(salaService, "SalaService", "Node.js", "Regras de cadastro e consulta das salas.")
+    Component(usuarioService, "UsuarioService", "Node.js", "Autentica e gerencia os usuários.")
+
+    Component(reservaRepo, "ReservaRepository", "mysql2", "Persistência das reservas.")
+    Component(salaRepo, "SalaRepository", "mysql2", "Persistência das salas.")
+    Component(usuarioRepo, "UsuarioRepository", "mysql2", "Persistência dos usuários.")
+}
+
+Rel(webapp, reservaController, "Chama", "JSON/HTTPS")
+Rel(webapp, salaController, "Chama", "JSON/HTTPS")
+Rel(webapp, authController, "Chama", "JSON/HTTPS")
+
+Rel(reservaController, reservaService, "Usa")
+Rel(salaController, salaService, "Usa")
+Rel(authController, usuarioService, "Usa")
+
+Rel(reservaService, reservaRepo, "Usa")
+Rel(reservaService, salaRepo, "Verifica a sala em")
+Rel(salaService, salaRepo, "Usa")
+Rel(usuarioService, usuarioRepo, "Usa")
+
+Rel(reservaRepo, db, "Lê e grava", "SQL")
+Rel(salaRepo, db, "Lê e grava", "SQL")
+Rel(usuarioRepo, db, "Lê e grava", "SQL")
+
+@enduml

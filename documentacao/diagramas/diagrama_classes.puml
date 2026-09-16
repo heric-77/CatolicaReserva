@@ -1,0 +1,76 @@
+@startuml Diagrama_Classes
+skinparam handwritten false
+skinparam class {
+    BackgroundColor #FFFFFF
+    ArrowColor #1168BD
+    BorderColor #1168BD
+}
+title Diagrama de Classes | Domínio de Reserva (CatólicaReserva - Node.js)
+
+class ReservaController {
+    - reservaService : ReservaService
+    + criarReserva(req, res)
+    + cancelarReserva(req, res)
+    + listarMinhasReservas(req, res)
+}
+
+class ReservaService {
+    - reservaRepository : ReservaRepository
+    - salaRepository : SalaRepository
+    + criar(dadosReserva) : Reserva
+    + cancelar(id)
+    + existeConflito(salaId, data, horaInicio, horaFim) : Boolean
+}
+
+class ReservaRepository {
+    + salvar(reserva) : Reserva
+    + buscarPorId(id) : Reserva
+    + buscarPorSalaEData(salaId, data) : Reserva[]
+    + remover(id)
+}
+
+class Reserva {
+    - id : Number
+    - usuarioId : Number
+    - salaId : Number
+    - data : Date
+    - horaInicio : String
+    - horaFim : String
+    - status : String
+}
+
+class Usuario {
+    - id : Number
+    - nome : String
+    - email : String
+    - senha : String
+    - tipo : String
+}
+
+class Sala {
+    - id : Number
+    - nome : String
+    - tipo : String
+    - capacidade : Number
+    - recursos : String
+}
+
+note bottom of Usuario
+  tipo: "ALUNO" | "PROFESSOR" | "ADMIN"
+end note
+
+note bottom of Sala
+  tipo: "SALA_ESTUDO" | "LABORATORIO"
+end note
+
+note bottom of Reserva
+  status: "ATIVA" | "CANCELADA"
+end note
+
+ReservaController --> ReservaService : "usa"
+ReservaService --> ReservaRepository : "usa"
+ReservaService ..> Reserva : "cria / gerencia"
+Reserva --> Usuario : "pertence a (usuarioId)"
+Reserva --> Sala : "reserva (salaId)"
+
+@enduml

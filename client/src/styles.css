@@ -1,0 +1,112 @@
+:root {
+  --vermelho: #a01722;
+  --vermelho-escuro: #6e0f17;
+  --ink: #1b1b1b;
+  --cinza: #5a5a5a;
+  --tint: #f6f1f1;
+  --borda: #e6d8da;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: 'Segoe UI', Calibri, Arial, sans-serif;
+  color: var(--ink);
+  background: #faf7f7;
+}
+
+.app { min-height: 100vh; display: flex; flex-direction: column; }
+
+/* Topo */
+.topo {
+  background: var(--vermelho-escuro);
+  color: #fff;
+  padding: 14px 28px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.topo-titulo { font-size: 22px; font-weight: bold; }
+.topo-titulo span { color: #f2c9ce; }
+.topo-usuario { display: flex; align-items: center; gap: 14px; font-size: 14px; }
+
+/* Conteúdo */
+.conteudo { flex: 1; padding: 28px; max-width: 1080px; margin: 0 auto; width: 100%; }
+
+.grade { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+@media (max-width: 780px) { .grade { grid-template-columns: 1fr; } }
+
+/* Cartões */
+.cartao {
+  background: #fff;
+  border: 1px solid var(--borda);
+  border-radius: 12px;
+  padding: 22px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+.cartao h2 { margin-top: 0; color: var(--vermelho); }
+.cartao-login { max-width: 400px; margin: 40px auto; }
+
+.subtitulo { margin: 22px 0 8px; color: var(--vermelho); font-size: 16px; }
+
+/* Formulário */
+.formulario { display: flex; flex-direction: column; gap: 12px; }
+.formulario label { display: flex; flex-direction: column; font-size: 13px; font-weight: 600; color: var(--cinza); gap: 4px; }
+.formulario input, .formulario select {
+  padding: 9px 10px;
+  border: 1px solid #ccc;
+  border-radius: 7px;
+  font-size: 14px;
+  font-family: inherit;
+}
+.linha { display: flex; gap: 12px; }
+.linha label { flex: 1; }
+
+/* Botões */
+.btn {
+  background: var(--vermelho);
+  color: #fff;
+  border: none;
+  padding: 11px;
+  border-radius: 7px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 4px;
+}
+.btn:hover { background: var(--vermelho-escuro); }
+.btn:disabled { opacity: 0.6; cursor: default; }
+.btn-secundario {
+  background: #fff; color: var(--vermelho);
+  border: 1px solid var(--vermelho);
+  padding: 5px 11px; border-radius: 6px; font-size: 13px; cursor: pointer;
+}
+.btn-secundario:hover { background: var(--tint); }
+.btn-link { background: none; border: none; color: var(--vermelho); cursor: pointer; font-weight: 600; text-decoration: underline; }
+.topo .btn-link { color: #f2c9ce; }
+
+/* Mensagens */
+.erro { color: #b00020; font-size: 13px; margin: 0; }
+.aviso { color: #1a7f37; font-size: 13px; margin: 0; }
+.vazio { color: var(--cinza); font-size: 14px; }
+.troca-modo { text-align: center; font-size: 14px; margin-top: 16px; }
+
+/* Lista de salas */
+.lista-salas { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 8px; }
+.lista-salas li { padding: 10px 12px; background: var(--tint); border-radius: 8px; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.lista-salas small { color: var(--cinza); width: 100%; }
+.tag { background: var(--vermelho); color: #fff; font-size: 11px; padding: 2px 8px; border-radius: 20px; }
+
+/* Lista de reservas */
+.lista-reservas { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 10px; }
+.lista-reservas li { display: flex; justify-content: space-between; align-items: center; padding: 12px; border: 1px solid var(--borda); border-radius: 8px; }
+.lista-reservas li.cancelada { opacity: 0.55; }
+.detalhe { font-size: 13px; color: var(--cinza); margin-top: 2px; }
+.acoes { display: flex; align-items: center; gap: 10px; }
+.status { font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 20px; }
+.status.ativa { background: #e6f4ea; color: #1a7f37; }
+.status.cancelada { background: #f4e6e6; color: #b00020; }
+
+/* Rodapé */
+.rodape { text-align: center; padding: 16px; font-size: 12px; color: var(--cinza); }

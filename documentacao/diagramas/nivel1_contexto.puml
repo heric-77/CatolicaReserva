@@ -1,0 +1,14 @@
+@startuml Nivel1_Contexto
+!include C4/C4_Context.puml
+
+title Nível 1 - Diagrama de Contexto | Sistema CatólicaReserva
+
+Person(usuario, "Aluno / Professor", "Reserva salas de estudo e laboratórios e consulta a disponibilidade dos horários.")
+Person(admin, "Administrador", "Cadastra as salas e laboratórios e acompanha as reservas realizadas.")
+
+System(catolicaReserva, "CatólicaReserva", "Permite consultar a disponibilidade de salas de estudo e laboratórios e realizar reservas, evitando conflitos de horário.")
+
+Rel(usuario, catolicaReserva, "Consulta disponibilidade e faz reservas usando", "HTTPS")
+Rel(admin, catolicaReserva, "Cadastra ambientes e gerencia reservas usando", "HTTPS")
+
+@enduml

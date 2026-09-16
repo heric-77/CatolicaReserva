@@ -1,0 +1,8 @@
+# dependências
+node_modules/
+# build do cliente
+client/dist/
+# variáveis de ambiente
+.env
+# logs
+*.log
