@@ -20,17 +20,25 @@ CatolicaReserva/
 ```
 
 A pasta `server/` segue a divisão em camadas do modelo C4
-(**Controller → Service → Repository**):
+(**Controller → Service → Repository**) e os princípios **SOLID**
+(ver [documentacao/SOLID.md](./documentacao/SOLID.md)):
 
 ```
 server/src/
-├── config/         # Conexão com o banco (pool MySQL)
-├── controllers/    # Recebem as requisições HTTP
-├── services/       # Regras de negócio (ex: validar conflito de horário)
-├── repositories/   # Acesso ao banco de dados
-├── routes/         # Definição das rotas da API
-├── middlewares/    # Autenticação e tratamento de erros
-└── database/       # schema.sql e seed.sql
+├── config/          # Leitura das variáveis de ambiente (.env)
+├── dominio/         # Regras de negócio puras (não conhece Express, MySQL, bcrypt nem JWT)
+│   ├── entidades/   #   Reserva, Sala, Usuario
+│   ├── contratos/   #   Interfaces: repositórios, hash, token, regras
+│   ├── regras/      #   Regras de reserva e de cancelamento (uma classe por regra)
+│   └── erros.js     #   Erros de domínio (sem status HTTP)
+├── services/        # Casos de uso: ReservaService, SalaService, UsuarioService
+├── infra/           # Implementações concretas: MySQL, bcrypt, JWT
+├── http/            # Controllers, rotas, middlewares e formatação do JSON
+├── database/        # schema.sql e seed.sql
+├── container.js     # Monta e injeta todas as dependências (Composition Root)
+├── app.js           # Configuração do Express
+└── server.js        # Ponto de entrada
+server/test/         # Testes automatizados (npm test)
 ```
 
 ## Pré-requisitos
@@ -48,6 +56,7 @@ cp .env.example .env      # ajuste usuário/senha do MySQL no arquivo .env
 npm install
 npm run db:init           # cria o banco, as tabelas e os dados iniciais
 npm run dev               # sobe a API em http://localhost:3001
+npm test                  # roda os testes automatizados (não precisa do banco)
 ```
 
 O `db:init` cria um administrador:
@@ -96,7 +105,7 @@ Acesse `http://localhost:5173`, crie uma conta (ou entre com o admin) e faça um
 - Edição de reserva e regras extras (limite de horário, antecedência)
 - Painel do administrador com todas as reservas na interface
 - Validações e mensagens de erro mais completas no cliente
-- Testes automatizados
+- Testes automatizados de integração (os testes de unidade das regras já existem)
 - Melhorias de layout, responsividade e acessibilidade
 - Configuração de implantação (deploy)
 

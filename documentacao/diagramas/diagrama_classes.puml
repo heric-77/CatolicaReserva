@@ -9,25 +9,56 @@ title Diagrama de Classes | Domínio de Reserva (CatólicaReserva - Node.js)
 
 class ReservaController {
     - reservaService : ReservaService
-    + criarReserva(req, res)
-    + cancelarReserva(req, res)
-    + listarMinhasReservas(req, res)
+    + criar(req, res)
+    + cancelar(req, res)
+    + listarMinhas(req, res)
+    + listarTodas(req, res)
 }
 
 class ReservaService {
     - reservaRepository : ReservaRepository
-    - salaRepository : SalaRepository
+    - regrasDeCriacao : RegraReserva[]
+    - regrasDeCancelamento : RegraCancelamento[]
     + criar(dadosReserva) : Reserva
-    + cancelar(id)
-    + existeConflito(salaId, data, horaInicio, horaFim) : Boolean
+    + cancelar(id, usuario) : Reserva
+    + listarMinhas(usuarioId) : Reserva[]
+    + listarTodas() : Reserva[]
 }
 
-class ReservaRepository {
+interface ReservaRepository <<contrato>> {
     + salvar(reserva) : Reserva
     + buscarPorId(id) : Reserva
-    + buscarPorSalaEData(salaId, data) : Reserva[]
-    + remover(id)
+    + listarPorUsuario(usuarioId) : Reserva[]
+    + listarTodas() : Reserva[]
+    + atualizarStatus(id, status) : Reserva
 }
+
+interface AgendaDeReservas <<contrato>> {
+    + buscarAtivasPorSalaEData(salaId, data) : Reserva[]
+}
+
+interface SalaRepository <<contrato>> {
+    + listar() : Sala[]
+    + buscarPorId(id) : Sala
+    + salvar(sala) : Sala
+}
+
+interface RegraReserva <<contrato>> {
+    + validar(reserva)
+}
+
+interface RegraCancelamento <<contrato>> {
+    + validar(reserva, usuario)
+}
+
+class CamposObrigatorios
+class HorarioValido
+class SalaDeveExistir
+class SemConflitoDeHorario
+class ApenasDonoOuAdmin
+
+class MySqlReservaRepository
+class MySqlSalaRepository
 
 class Reserva {
     - id : Number
@@ -37,14 +68,19 @@ class Reserva {
     - horaInicio : String
     - horaFim : String
     - status : String
+    + sobrepoe(outra) : Boolean
+    + pertenceA(usuarioId) : Boolean
+    + cancelar()
 }
 
 class Usuario {
     - id : Number
     - nome : String
     - email : String
-    - senha : String
+    - senhaHash : String
     - tipo : String
+    + ehAdmin() : Boolean
+    + {static} validarCadastro(dados)
 }
 
 class Sala {
@@ -53,6 +89,7 @@ class Sala {
     - tipo : String
     - capacidade : Number
     - recursos : String
+    + {static} criar(dados) : Sala
 }
 
 note bottom of Usuario
@@ -69,7 +106,23 @@ end note
 
 ReservaController --> ReservaService : "usa"
 ReservaService --> ReservaRepository : "usa"
+ReservaService --> RegraReserva : "executa"
+ReservaService --> RegraCancelamento : "executa"
 ReservaService ..> Reserva : "cria / gerencia"
+
+CamposObrigatorios ..|> RegraReserva
+HorarioValido ..|> RegraReserva
+SalaDeveExistir ..|> RegraReserva
+SemConflitoDeHorario ..|> RegraReserva
+ApenasDonoOuAdmin ..|> RegraCancelamento
+
+SalaDeveExistir --> SalaRepository : "usa"
+SemConflitoDeHorario --> AgendaDeReservas : "usa"
+
+MySqlReservaRepository ..|> ReservaRepository
+MySqlReservaRepository ..|> AgendaDeReservas
+MySqlSalaRepository ..|> SalaRepository
+
 Reserva --> Usuario : "pertence a (usuarioId)"
 Reserva --> Sala : "reserva (salaId)"
 

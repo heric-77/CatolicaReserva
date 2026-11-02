@@ -7,17 +7,35 @@ Container(webapp, "Aplicação Web (Cliente)", "React", "Faz as requisições do
 ContainerDb(db, "Banco de Dados", "MySQL", "Armazena usuários, salas e reservas.")
 
 Container_Boundary(api, "Servidor / API REST (Node.js + Express)") {
-    Component(reservaController, "ReservaController", "Express", "Recebe as requisições de reserva (criar, cancelar, listar).")
-    Component(salaController, "SalaController", "Express", "Recebe as requisições de cadastro e consulta de salas.")
-    Component(authController, "AuthController", "Express", "Recebe o login e autentica o usuário.")
 
-    Component(reservaService, "ReservaService", "Node.js", "Regras de negócio das reservas; valida conflitos de horário.")
-    Component(salaService, "SalaService", "Node.js", "Regras de cadastro e consulta das salas.")
-    Component(usuarioService, "UsuarioService", "Node.js", "Autentica e gerencia os usuários.")
+    Boundary(http, "Camada HTTP (src/http)") {
+        Component(reservaController, "ReservaController", "Express", "Recebe as requisições de reserva (criar, cancelar, listar).")
+        Component(salaController, "SalaController", "Express", "Recebe as requisições de cadastro e consulta de salas.")
+        Component(authController, "AuthController", "Express", "Recebe o registro e o login.")
+        Component(authMiddleware, "Middleware de Autenticação", "Express", "Valida o token e restringe rotas por tipo de usuário.")
+    }
 
-    Component(reservaRepo, "ReservaRepository", "mysql2", "Persistência das reservas.")
-    Component(salaRepo, "SalaRepository", "mysql2", "Persistência das salas.")
-    Component(usuarioRepo, "UsuarioRepository", "mysql2", "Persistência dos usuários.")
+    Boundary(aplicacao, "Casos de uso (src/services)") {
+        Component(reservaService, "ReservaService", "Node.js", "Orquestra criação e cancelamento executando as regras injetadas.")
+        Component(salaService, "SalaService", "Node.js", "Cadastro e consulta das salas.")
+        Component(usuarioService, "UsuarioService", "Node.js", "Registro e autenticação dos usuários.")
+    }
+
+    Boundary(dominio, "Domínio (src/dominio)") {
+        Component(regrasReserva, "Regras de Reserva", "RegraReserva", "CamposObrigatorios, HorarioValido, SalaDeveExistir, SemConflitoDeHorario.")
+        Component(regrasCancelamento, "Regras de Cancelamento", "RegraCancelamento", "ApenasDonoOuAdmin.")
+        Component(contratos, "Contratos (interfaces)", "Node.js", "ReservaRepository, AgendaDeReservas, SalaRepository, UsuarioRepository, GeradorHash, GeradorToken, VerificadorToken.")
+    }
+
+    Boundary(infra, "Infraestrutura (src/infra)") {
+        Component(reservaRepo, "MySqlReservaRepository", "mysql2", "Implementa ReservaRepository e AgendaDeReservas.")
+        Component(salaRepo, "MySqlSalaRepository", "mysql2", "Implementa SalaRepository.")
+        Component(usuarioRepo, "MySqlUsuarioRepository", "mysql2", "Implementa UsuarioRepository.")
+        Component(hash, "BcryptGeradorHash", "bcryptjs", "Implementa GeradorHash.")
+        Component(token, "JwtServicoToken", "jsonwebtoken", "Implementa GeradorToken e VerificadorToken.")
+    }
+
+    Component(container, "Container (Composition Root)", "container.js", "Instancia as classes concretas e injeta as dependências.")
 }
 
 Rel(webapp, reservaController, "Chama", "JSON/HTTPS")
@@ -27,14 +45,26 @@ Rel(webapp, authController, "Chama", "JSON/HTTPS")
 Rel(reservaController, reservaService, "Usa")
 Rel(salaController, salaService, "Usa")
 Rel(authController, usuarioService, "Usa")
+Rel(authMiddleware, contratos, "Usa VerificadorToken")
 
-Rel(reservaService, reservaRepo, "Usa")
-Rel(reservaService, salaRepo, "Verifica a sala em")
-Rel(salaService, salaRepo, "Usa")
-Rel(usuarioService, usuarioRepo, "Usa")
+Rel(reservaService, regrasReserva, "Executa")
+Rel(reservaService, regrasCancelamento, "Executa")
+Rel(reservaService, contratos, "Usa ReservaRepository")
+Rel(regrasReserva, contratos, "Usa SalaRepository e AgendaDeReservas")
+Rel(salaService, contratos, "Usa SalaRepository")
+Rel(usuarioService, contratos, "Usa UsuarioRepository, GeradorHash, GeradorToken")
+
+Rel(reservaRepo, contratos, "Implementa")
+Rel(salaRepo, contratos, "Implementa")
+Rel(usuarioRepo, contratos, "Implementa")
+Rel(hash, contratos, "Implementa")
+Rel(token, contratos, "Implementa")
 
 Rel(reservaRepo, db, "Lê e grava", "SQL")
 Rel(salaRepo, db, "Lê e grava", "SQL")
 Rel(usuarioRepo, db, "Lê e grava", "SQL")
+
+Rel(container, infra, "Instancia")
+Rel(container, aplicacao, "Injeta dependências em")
 
 @enduml

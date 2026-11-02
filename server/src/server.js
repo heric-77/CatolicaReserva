@@ -1,11 +1,11 @@
-// Ponto de entrada do servidor.
-require('dotenv').config();
-const app = require('./app');
-const pool = require('./config/db');
-
-const PORT = process.env.PORT || 3001;
+// Ponto de entrada do servidor: lê a configuração, monta as dependências
+// pelo container e sobe a API.
+const config = require('./config/ambiente');
+const criarContainer = require('./container');
 
 async function iniciar() {
+  const { app, pool } = criarContainer(config);
+
   try {
     // Testa a conexão com o banco antes de subir o servidor.
     const conexao = await pool.getConnection();
@@ -18,8 +18,8 @@ async function iniciar() {
     // Segue subindo o servidor mesmo assim, para facilitar o desenvolvimento.
   }
 
-  app.listen(PORT, () => {
-    console.log(`Servidor CatólicaReserva rodando em http://localhost:${PORT}`);
+  app.listen(config.porta, () => {
+    console.log(`Servidor CatólicaReserva rodando em http://localhost:${config.porta}`);
   });
 }
 
