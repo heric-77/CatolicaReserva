@@ -23,7 +23,7 @@ Container_Boundary(api, "Servidor / API REST (Node.js + Express)") {
 
     Boundary(dominio, "Domínio (src/dominio)") {
         Component(regrasReserva, "Regras de Reserva", "RegraReserva", "CamposObrigatorios, HorarioValido, SalaDeveExistir, SemConflitoDeHorario.")
-        Component(regrasCancelamento, "Regras de Cancelamento", "RegraCancelamento", "ApenasDonoOuAdmin.")
+        Component(regrasCancelamento, "Regras de Alteração", "RegraAlteracao", "ApenasDonoOuAdmin, SomenteReservaAtiva.")
         Component(contratos, "Contratos (interfaces)", "Node.js", "ReservaRepository, AgendaDeReservas, SalaRepository, UsuarioRepository, GeradorHash, GeradorToken, VerificadorToken.")
     }
 

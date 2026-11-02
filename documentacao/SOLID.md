@@ -15,8 +15,8 @@ chamadas antes e depois da refatoração.
 server/src/
 ├── dominio/            ← núcleo: não importa Express, MySQL, bcrypt nem JWT
 │   ├── entidades/      Reserva, Sala, Usuario
-│   ├── contratos/      interfaces (Contrato.js + 9 contratos)
-│   ├── regras/         reserva/ e cancelamento/ — uma classe por regra
+│   ├── contratos/      interfaces (Contrato.js + 12 contratos)
+│   ├── regras/         reserva/ e alteracao/ — uma classe por regra
 │   └── erros.js        DadosInvalidos, NaoEncontrado, Conflito, AcessoNegado, CredenciaisInvalidas
 ├── services/           ReservaService, SalaService, UsuarioService (casos de uso)
 ├── infra/              MySql*Repository, BcryptGeradorHash, JwtServicoToken
@@ -45,12 +45,12 @@ mais na regra de cadastro; mudar o formato do JSON não mexe nos services.
 | Antes | Depois |
 |---|---|
 | `reservaService.criar` era uma sequência de 4 `if` | Cada validação virou uma classe com `validar(reserva)` em `dominio/regras/reserva/` |
-| Permissão de cancelamento fixa no service | Classe `ApenasDonoOuAdmin` em `dominio/regras/cancelamento/` |
+| Permissão de cancelamento fixa no service | Classe `ApenasDonoOuAdmin` em `dominio/regras/alteracao/` |
 
 O `ReservaService` recebe a lista de regras e só as executa em ordem:
 
 ```js
-for (const regra of this.regrasDeCriacao) {
+for (const regra of this.regrasDeReserva) {
   await regra.validar(reserva);
 }
 ```
@@ -76,15 +76,18 @@ o banco ou testar sem banco sem medo de quebrar o sistema.
 
 | Contrato | Métodos | Quem usa | Quem implementa |
 |---|---|---|---|
-| `ReservaRepository` | salvar, buscarPorId, listarPorUsuario, listarTodas, atualizarStatus | ReservaService | MySqlReservaRepository |
+| `ReservaRepository` | salvar, buscarPorId, listarPorUsuario, listarTodas, atualizar, atualizarStatus | ReservaService | MySqlReservaRepository |
 | `AgendaDeReservas` | buscarAtivasPorSalaEData | regra SemConflitoDeHorario | MySqlReservaRepository |
-| `SalaRepository` | listar, buscarPorId, salvar | SalaService, regra SalaDeveExistir | MySqlSalaRepository |
+| `AgendaDoDia` | buscarAtivasPorData | AgendaService | MySqlReservaRepository |
+| `SalaRepository` | listar, buscarPorId, salvar, atualizar, remover | SalaService | MySqlSalaRepository |
+| `ConsultaDeSala` | buscarPorId | regra SalaDeveExistir | MySqlSalaRepository |
 | `UsuarioRepository` | buscarPorEmail, salvar | UsuarioService | MySqlUsuarioRepository |
+| `GestaoDeUsuariosRepository` | listar, buscarPorId, atualizarTipo, remover | GestaoDeUsuariosService | MySqlUsuarioRepository |
 | `GeradorHash` | gerar, comparar | UsuarioService | BcryptGeradorHash |
 | `GeradorToken` | gerar | UsuarioService | JwtServicoToken |
 | `VerificadorToken` | verificar | middleware de autenticação | JwtServicoToken |
-| `RegraReserva` | validar(reserva) | ReservaService | 4 regras de criação |
-| `RegraCancelamento` | validar(reserva, usuario) | ReservaService | ApenasDonoOuAdmin |
+| `RegraReserva` | validar(reserva) | ReservaService | 9 regras de criação e edição |
+| `RegraAlteracao` | validar(reserva, usuario) | ReservaService | ApenasDonoOuAdmin, SomenteReservaAtiva |
 
 **Por quê:** cada classe depende só do que usa. A regra de conflito depende de
 `AgendaDeReservas` (1 método), não do repositório inteiro. O middleware só verifica token,
@@ -98,7 +101,7 @@ no construtor: uma implementação incompleta impede o servidor de subir e mostr
 
 | Antes | Depois |
 |---|---|
-| `const reservaRepository = require('../repositories/reservaRepository')` | `constructor({ reservaRepository, regrasDeCriacao, ... })` |
+| `const reservaRepository = require('../repositories/reservaRepository')` | `constructor({ reservaRepository, regrasDeReserva, ... })` |
 | Repositórios faziam `require('../config/db')` | Repositórios recebem o `pool` no construtor |
 | Nenhum ponto central de montagem | `container.js` cria e conecta tudo; `server.js` só chama o container |
 
@@ -120,12 +123,12 @@ para esse caso.
 | 2 | Domínio isolado da infraestrutura | ❌ | ✅ | `src/dominio` e `src/services` não importam nenhuma biblioteca externa |
 | 3 | Relações do C4 = injeções no código | ⚠️ | ✅ | `container.js` reproduz as setas do diagrama |
 | 4 | Responsabilidade única | ⚠️ | ✅ | Hash, token, JSON e status HTTP fora dos services |
-| 5 | Sem God Classes | ✅ | ✅ | Maior arquivo: `MySqlReservaRepository` (~75 linhas) |
+| 5 | Sem God Classes | ✅ | ✅ | Maior arquivo: `MySqlReservaRepository` (~90 linhas) |
 | 6 | Validação e persistência delegadas | ⚠️ | ✅ | `dominio/regras/*`, `infra/mysql/*` |
 | 7 | Comportamento novo = classe nova | ❌ | ✅ | Lista de regras injetada; teste de OCP |
 | 8 | Requisito novo não edita o núcleo | ❌ | ✅ | Mudanças ficam em regras novas e no `container.js` |
 | 9 | Sem `NotImplemented` nas implementações | — | ✅ | `test/Contratos.test.js` |
-| 10 | Interfaces coesas | ❌ | ✅ | 9 contratos pequenos, de 1 a 5 métodos |
+| 10 | Interfaces coesas | ❌ | ✅ | 12 contratos pequenos, de 1 a 6 métodos |
 | 11 | Nenhum método vazio forçado | — | ✅ | `test/Contratos.test.js` |
 | 12 | Alto nível depende de abstrações | ❌ | ✅ | Services e regras recebem contratos no construtor |
 | 13 | Dependências configuradas no ponto de entrada | ❌ | ✅ | `container.js`, chamado por `server.js` |
@@ -134,6 +137,6 @@ para esse caso.
 
 ```bash
 cd server
-npm test       # 27 testes: regras, services e contratos (não precisa de banco)
+npm test       # testes de regras, services e contratos (não precisa de banco)
 npm run dev    # API em http://localhost:3001, com o mesmo comportamento de antes
 ```

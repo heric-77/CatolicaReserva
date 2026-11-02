@@ -1,5 +1,6 @@
-// Implementação MySQL do contrato SalaRepository.
+// Implementação MySQL dos contratos SalaRepository e ConsultaDeSala.
 const Sala = require('../../dominio/entidades/Sala');
+const { emTransacao } = require('./transacao');
 
 function paraEntidade(linha) {
   return new Sala({
@@ -32,6 +33,21 @@ class MySqlSalaRepository {
       [sala.nome, sala.tipo, sala.capacidade, sala.recursos]
     );
     return new Sala({ ...sala, id: resultado.insertId });
+  }
+
+  async atualizar(sala) {
+    await this.pool.query(
+      'UPDATE salas SET nome = ?, tipo = ?, capacidade = ?, recursos = ? WHERE id = ?',
+      [sala.nome, sala.tipo, sala.capacidade, sala.recursos, sala.id]
+    );
+    return this.buscarPorId(sala.id);
+  }
+
+  async remover(id) {
+    await emTransacao(this.pool, async (conexao) => {
+      await conexao.query('DELETE FROM reservas WHERE sala_id = ?', [id]);
+      await conexao.query('DELETE FROM salas WHERE id = ?', [id]);
+    });
   }
 }
 

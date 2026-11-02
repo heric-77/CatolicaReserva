@@ -1,14 +1,14 @@
 // Regra: só é possível reservar uma sala que existe.
 const { NaoEncontradoError } = require('../../erros');
-const SalaRepository = require('../../contratos/SalaRepository');
+const ConsultaDeSala = require('../../contratos/ConsultaDeSala');
 
 class SalaDeveExistir {
-  constructor({ salaRepository }) {
-    this.salaRepository = SalaRepository.verificar(salaRepository);
+  constructor({ consultaDeSala }) {
+    this.consultaDeSala = ConsultaDeSala.verificar(consultaDeSala);
   }
 
   async validar(reserva) {
-    const sala = await this.salaRepository.buscarPorId(reserva.salaId);
+    const sala = await this.consultaDeSala.buscarPorId(reserva.salaId);
     if (!sala) {
       throw new NaoEncontradoError('Sala não encontrada.');
     }

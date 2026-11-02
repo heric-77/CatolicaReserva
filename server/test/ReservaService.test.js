@@ -6,7 +6,8 @@ const CamposObrigatorios = require('../src/dominio/regras/reserva/CamposObrigato
 const HorarioValido = require('../src/dominio/regras/reserva/HorarioValido');
 const SalaDeveExistir = require('../src/dominio/regras/reserva/SalaDeveExistir');
 const SemConflitoDeHorario = require('../src/dominio/regras/reserva/SemConflitoDeHorario');
-const ApenasDonoOuAdmin = require('../src/dominio/regras/cancelamento/ApenasDonoOuAdmin');
+const ApenasDonoOuAdmin = require('../src/dominio/regras/alteracao/ApenasDonoOuAdmin');
+const SomenteReservaAtiva = require('../src/dominio/regras/alteracao/SomenteReservaAtiva');
 const {
   DadosInvalidosError,
   NaoEncontradoError,
@@ -25,14 +26,15 @@ function montar({ reservas = [], regrasExtras = [] } = {}) {
   ]);
   const service = new ReservaService({
     reservaRepository,
-    regrasDeCriacao: [
+    regrasDeReserva: [
       new CamposObrigatorios(),
       new HorarioValido(),
-      new SalaDeveExistir({ salaRepository }),
+      new SalaDeveExistir({ consultaDeSala: salaRepository }),
       new SemConflitoDeHorario({ agendaDeReservas: reservaRepository }),
       ...regrasExtras,
     ],
-    regrasDeCancelamento: [new ApenasDonoOuAdmin()],
+    regrasDeEdicao: [new ApenasDonoOuAdmin({ acao: 'editar' }), new SomenteReservaAtiva()],
+    regrasDeCancelamento: [new ApenasDonoOuAdmin({ acao: 'cancelar' })],
   });
   return { service, reservaRepository };
 }
@@ -105,6 +107,57 @@ describe('ReservaService.criar', () => {
       service.criar({ usuarioId: 7, salaId: 1, data: DATA, horaInicio: '08:00', horaFim: '11:00' }),
       /no máximo 2 horas/
     );
+  });
+});
+
+describe('ReservaService.editar', () => {
+  const novoHorario = { salaId: 1, data: DATA, horaInicio: '14:00', horaFim: '15:00' };
+
+  test('o dono consegue alterar o horário', async () => {
+    const { service } = montar({ reservas: [reservaDas10as11] });
+    const reserva = await service.editar(1, novoHorario, { id: 7, tipo: 'ALUNO' });
+    assert.equal(reserva.horaInicio, '14:00:00');
+    assert.equal(reserva.usuarioId, 7);
+  });
+
+  test('a reserva não conflita com ela mesma', async () => {
+    const { service } = montar({ reservas: [reservaDas10as11] });
+    const reserva = await service.editar(
+      1,
+      { salaId: 1, data: DATA, horaInicio: '10:30', horaFim: '11:30' },
+      { id: 7, tipo: 'ALUNO' }
+    );
+    assert.equal(reserva.horaFim, '11:30:00');
+  });
+
+  test('recusa horário que conflita com outra reserva', async () => {
+    const outra = { ...reservaDas10as11, id: 2, usuarioId: 8, horaInicio: '14:00:00', horaFim: '16:00:00' };
+    const { service } = montar({ reservas: [reservaDas10as11, outra] });
+    await assert.rejects(service.editar(1, novoHorario, { id: 7, tipo: 'ALUNO' }), ConflitoError);
+  });
+
+  test('outro aluno não consegue editar', async () => {
+    const { service } = montar({ reservas: [reservaDas10as11] });
+    await assert.rejects(
+      service.editar(1, novoHorario, { id: 8, tipo: 'ALUNO' }),
+      /permissão para editar/
+    );
+  });
+
+  test('o administrador consegue editar reserva de outra pessoa, sem mudar o dono', async () => {
+    const { service } = montar({ reservas: [reservaDas10as11] });
+    const reserva = await service.editar(1, novoHorario, { id: 1, tipo: 'ADMIN' });
+    assert.equal(reserva.usuarioId, 7);
+  });
+
+  test('não edita reserva cancelada', async () => {
+    const { service } = montar({ reservas: [{ ...reservaDas10as11, status: 'CANCELADA' }] });
+    await assert.rejects(service.editar(1, novoHorario, { id: 7, tipo: 'ALUNO' }), ConflitoError);
+  });
+
+  test('reserva inexistente', async () => {
+    const { service } = montar();
+    await assert.rejects(service.editar(99, novoHorario, { id: 7, tipo: 'ALUNO' }), NaoEncontradoError);
   });
 });
 

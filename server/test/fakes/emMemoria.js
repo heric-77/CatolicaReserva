@@ -27,12 +27,22 @@ class ReservaRepositoryEmMemoria {
     );
   }
 
+  async buscarAtivasPorData(data) {
+    return this.reservas.filter((r) => r.data === data && r.status === Reserva.STATUS.ATIVA);
+  }
+
   async listarPorUsuario(usuarioId) {
     return this.reservas.filter((r) => r.usuarioId === usuarioId);
   }
 
   async listarTodas() {
     return [...this.reservas];
+  }
+
+  async atualizar(reserva) {
+    const atualizada = new Reserva(reserva);
+    this.reservas = this.reservas.map((r) => (r.id === reserva.id ? atualizada : r));
+    return atualizada;
   }
 
   async atualizarStatus(id, status) {
@@ -60,6 +70,16 @@ class SalaRepositoryEmMemoria {
     this.salas.push(salva);
     return salva;
   }
+
+  async atualizar(sala) {
+    const atualizada = new Sala(sala);
+    this.salas = this.salas.map((s) => (s.id === sala.id ? atualizada : s));
+    return atualizada;
+  }
+
+  async remover(id) {
+    this.salas = this.salas.filter((s) => s.id !== id);
+  }
 }
 
 class UsuarioRepositoryEmMemoria {
@@ -75,6 +95,24 @@ class UsuarioRepositoryEmMemoria {
     const salvo = new Usuario({ ...usuario, id: this.usuarios.length + 1 });
     this.usuarios.push(salvo);
     return salvo;
+  }
+
+  async listar() {
+    return [...this.usuarios];
+  }
+
+  async buscarPorId(id) {
+    return this.usuarios.find((u) => u.id === id) || null;
+  }
+
+  async atualizarTipo(id, tipo) {
+    const usuario = await this.buscarPorId(id);
+    usuario.tipo = tipo;
+    return usuario;
+  }
+
+  async remover(id) {
+    this.usuarios = this.usuarios.filter((u) => u.id !== id);
   }
 }
 

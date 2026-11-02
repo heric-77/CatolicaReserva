@@ -7,6 +7,7 @@ const Contrato = require('./Contrato');
  * buscarPorId(id: number): Promise<Reserva | null>
  * listarPorUsuario(usuarioId: number): Promise<Reserva[]>
  * listarTodas(): Promise<Reserva[]>
+ * atualizar(reserva: Reserva): Promise<Reserva>
  * atualizarStatus(id: number, status: string): Promise<Reserva>
  */
 module.exports = new Contrato('ReservaRepository', [
@@ -14,5 +15,6 @@ module.exports = new Contrato('ReservaRepository', [
   'buscarPorId',
   'listarPorUsuario',
   'listarTodas',
+  'atualizar',
   'atualizarStatus',
 ]);

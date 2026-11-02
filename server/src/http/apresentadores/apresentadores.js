@@ -30,4 +30,18 @@ function apresentarReserva(reserva) {
   };
 }
 
-module.exports = { apresentarUsuario, apresentarSala, apresentarReserva };
+// Na agenda, qualquer usuário logado vê os horários ocupados, mas não quem reservou.
+function apresentarAgenda({ data, abertura, fechamento, ocupadas }) {
+  return {
+    data,
+    abertura,
+    fechamento,
+    ocupadas: ocupadas.map((reserva) => ({
+      sala_id: reserva.salaId,
+      hora_inicio: reserva.horaInicio,
+      hora_fim: reserva.horaFim,
+    })),
+  };
+}
+
+module.exports = { apresentarUsuario, apresentarSala, apresentarReserva, apresentarAgenda };

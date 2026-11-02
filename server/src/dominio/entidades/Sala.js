@@ -23,7 +23,7 @@ class Sala {
     if (!Object.values(TIPOS).includes(tipo)) {
       throw new DadosInvalidosError('Tipo de sala inválido (use SALA_ESTUDO ou LABORATORIO).');
     }
-    if (Number(capacidade) <= 0) {
+    if (!(Number(capacidade) > 0)) {
       throw new DadosInvalidosError('A capacidade deve ser maior que zero.');
     }
     return new Sala({ nome, tipo, capacidade: Number(capacidade), recursos });

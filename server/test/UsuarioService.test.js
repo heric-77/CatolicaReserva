@@ -40,6 +40,21 @@ describe('UsuarioService', () => {
     );
   });
 
+  test('o cadastro público não cria administrador', async () => {
+    const service = montar();
+    await assert.rejects(
+      service.registrar({ nome: 'Ana', email: 'ana@x.com', senha: '1', tipo: 'ADMIN' }),
+      DadosInvalidosError
+    );
+    assert.equal(await service.usuarioRepository.buscarPorEmail('ana@x.com'), null);
+  });
+
+  test('o cadastro aceita aluno e professor', async () => {
+    const service = montar();
+    const professor = await service.registrar({ nome: 'Bia', email: 'bia@x.com', senha: '1', tipo: 'PROFESSOR' });
+    assert.equal(professor.tipo, 'PROFESSOR');
+  });
+
   test('recusa e-mail repetido', async () => {
     const service = montar();
     await service.registrar({ nome: 'Ana', email: 'ana@x.com', senha: '123' });

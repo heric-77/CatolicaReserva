@@ -1,4 +1,4 @@
-// Implementação MySQL dos contratos ReservaRepository e AgendaDeReservas.
+// Implementação MySQL dos contratos ReservaRepository, AgendaDeReservas e AgendaDoDia.
 // Única parte do sistema que conhece o SQL e os nomes das colunas de reservas.
 const Reserva = require('../../dominio/entidades/Reserva');
 
@@ -52,6 +52,14 @@ class MySqlReservaRepository {
     return linhas.map(paraEntidade);
   }
 
+  async buscarAtivasPorData(data) {
+    const [linhas] = await this.pool.query(
+      `SELECT * FROM reservas WHERE data = ? AND status = ? ORDER BY hora_inicio`,
+      [data, Reserva.STATUS.ATIVA]
+    );
+    return linhas.map(paraEntidade);
+  }
+
   async listarPorUsuario(usuarioId) {
     const [linhas] = await this.pool.query(
       `${SELECT_BASE} WHERE r.usuario_id = ? ORDER BY r.data DESC, r.hora_inicio`,
@@ -63,6 +71,14 @@ class MySqlReservaRepository {
   async listarTodas() {
     const [linhas] = await this.pool.query(`${SELECT_BASE} ORDER BY r.data DESC, r.hora_inicio`);
     return linhas.map(paraEntidade);
+  }
+
+  async atualizar(reserva) {
+    await this.pool.query(
+      'UPDATE reservas SET sala_id = ?, data = ?, hora_inicio = ?, hora_fim = ? WHERE id = ?',
+      [reserva.salaId, reserva.data, reserva.horaInicio, reserva.horaFim, reserva.id]
+    );
+    return this.buscarPorId(reserva.id);
   }
 
   async atualizarStatus(id, status) {

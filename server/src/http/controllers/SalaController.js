@@ -15,6 +15,16 @@ class SalaController {
     const sala = await this.salaService.criar(req.body);
     res.status(201).json(apresentarSala(sala));
   };
+
+  atualizar = async (req, res) => {
+    const sala = await this.salaService.atualizar(Number(req.params.id), req.body);
+    res.json(apresentarSala(sala));
+  };
+
+  remover = async (req, res) => {
+    await this.salaService.remover(Number(req.params.id));
+    res.status(204).end();
+  };
 }
 
 module.exports = SalaController;

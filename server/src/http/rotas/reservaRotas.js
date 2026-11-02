@@ -9,7 +9,8 @@ function criarReservaRotas({ reservaController, autenticar }) {
   router.post('/', autenticar, executar(reservaController.criar));
   router.get('/minhas', autenticar, executar(reservaController.listarMinhas));
   router.get('/', autenticar, apenas('ADMIN'), executar(reservaController.listarTodas));
-  router.patch('/:id/cancelar', autenticar, executar(reservaController.cancelar));
+  router.put('/:id(\\d+)', autenticar, executar(reservaController.editar));
+  router.patch('/:id(\\d+)/cancelar', autenticar, executar(reservaController.cancelar));
 
   return router;
 }

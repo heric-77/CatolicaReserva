@@ -5,6 +5,7 @@
   --cinza: #5a5a5a;
   --tint: #f6f1f1;
   --borda: #e6d8da;
+  --borda-campo: #8a8a8a;
 }
 
 * { box-sizing: border-box; }
@@ -18,24 +19,82 @@ body {
 
 .app { min-height: 100vh; display: flex; flex-direction: column; }
 
+/* Acessibilidade */
+:focus-visible { outline: 3px solid #1a5fb4; outline-offset: 2px; }
+.topo :focus-visible { outline-color: #fff; }
+main:focus { outline: none; }
+
+.so-leitor {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.pular-conteudo {
+  position: absolute;
+  left: 12px;
+  top: -60px;
+  z-index: 10;
+  background: #fff;
+  color: var(--vermelho-escuro);
+  padding: 10px 14px;
+  border-radius: 0 0 8px 8px;
+  font-weight: 600;
+}
+.pular-conteudo:focus { top: 0; }
+
 /* Topo */
 .topo {
   background: var(--vermelho-escuro);
   color: #fff;
   padding: 14px 28px;
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
+  gap: 10px 24px;
 }
 .topo-titulo { font-size: 22px; font-weight: bold; }
 .topo-titulo span { color: #f2c9ce; }
 .topo-usuario { display: flex; align-items: center; gap: 14px; font-size: 14px; }
 
+/* Navegação */
+.navegacao { display: flex; flex-wrap: wrap; gap: 4px; flex: 1; }
+.navegacao button {
+  background: none;
+  border: none;
+  color: #fff;
+  padding: 8px 12px;
+  border-radius: 7px;
+  font: inherit;
+  font-size: 15px;
+  cursor: pointer;
+}
+.navegacao button:hover { background: rgba(255, 255, 255, 0.15); }
+.navegacao button[aria-current='page'] { background: #fff; color: var(--vermelho-escuro); font-weight: 600; }
+
+.sub-navegacao { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 18px; }
+.sub-navegacao button {
+  background: #fff;
+  border: 1px solid var(--vermelho);
+  color: var(--vermelho);
+  padding: 8px 16px;
+  border-radius: 20px;
+  font: inherit;
+  font-size: 14px;
+  cursor: pointer;
+}
+.sub-navegacao button:hover { background: var(--tint); }
+.sub-navegacao button[aria-current='page'] { background: var(--vermelho); color: #fff; font-weight: 600; }
+
 /* Conteúdo */
 .conteudo { flex: 1; padding: 28px; max-width: 1080px; margin: 0 auto; width: 100%; }
 
-.grade { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
-@media (max-width: 780px) { .grade { grid-template-columns: 1fr; } }
+.grade { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 24px; align-items: start; }
+@media (max-width: 780px) { .grade { grid-template-columns: minmax(0, 1fr); } }
 
 /* Cartões */
 .cartao {
@@ -52,16 +111,26 @@ body {
 
 /* Formulário */
 .formulario { display: flex; flex-direction: column; gap: 12px; }
-.formulario label { display: flex; flex-direction: column; font-size: 13px; font-weight: 600; color: var(--cinza); gap: 4px; }
-.formulario input, .formulario select {
+.formulario label, .campo-inline { display: flex; flex-direction: column; font-size: 13px; font-weight: 600; color: var(--cinza); gap: 4px; }
+input, select {
   padding: 9px 10px;
-  border: 1px solid #ccc;
+  border: 1px solid var(--borda-campo);
   border-radius: 7px;
   font-size: 14px;
   font-family: inherit;
+  background: #fff;
+  color: var(--ink);
+  min-width: 0;
+  max-width: 100%;
 }
 .linha { display: flex; gap: 12px; }
-.linha label { flex: 1; }
+.linha label { flex: 1; min-width: 0; }
+.linha input { width: 100%; }
+.botoes-formulario { display: flex; gap: 10px; align-items: stretch; }
+.botoes-formulario .btn { flex: 1; margin-top: 0; }
+.filtros { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 12px; margin-bottom: 14px; }
+.filtros input, .filtros select { width: 100%; }
+.contagem { font-size: 13px; color: var(--cinza); margin: 10px 0; }
 
 /* Botões */
 .btn {
@@ -83,12 +152,14 @@ body {
   padding: 5px 11px; border-radius: 6px; font-size: 13px; cursor: pointer;
 }
 .btn-secundario:hover { background: var(--tint); }
-.btn-link { background: none; border: none; color: var(--vermelho); cursor: pointer; font-weight: 600; text-decoration: underline; }
+.btn-secundario:disabled { color: var(--cinza); border-color: var(--borda-campo); cursor: default; background: #fff; }
+.btn-link { background: none; border: none; color: var(--vermelho); cursor: pointer; font-weight: 600; text-decoration: underline; font-size: inherit; }
 .topo .btn-link { color: #f2c9ce; }
 
 /* Mensagens */
-.erro { color: #b00020; font-size: 13px; margin: 0; }
-.aviso { color: #1a7f37; font-size: 13px; margin: 0; }
+.erro { color: #b00020; font-size: 13px; margin: 0 0 8px; }
+.aviso { color: #1a7f37; font-size: 13px; margin: 0 0 8px; }
+.formulario .mensagens:not(:has(p)) { display: contents; }
 .vazio { color: var(--cinza); font-size: 14px; }
 .troca-modo { text-align: center; font-size: 14px; margin-top: 16px; }
 
@@ -98,15 +169,70 @@ body {
 .lista-salas small { color: var(--cinza); width: 100%; }
 .tag { background: var(--vermelho); color: #fff; font-size: 11px; padding: 2px 8px; border-radius: 20px; }
 
-/* Lista de reservas */
+/* Lista de reservas (também usada nas listas da administração) */
 .lista-reservas { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 10px; }
-.lista-reservas li { display: flex; justify-content: space-between; align-items: center; padding: 12px; border: 1px solid var(--borda); border-radius: 8px; }
-.lista-reservas li.cancelada { opacity: 0.55; }
+.lista-reservas li { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px; padding: 12px; border: 1px solid var(--borda); border-radius: 8px; overflow-wrap: anywhere; }
+.lista-reservas li.cancelada { background: #f5f5f5; }
 .detalhe { font-size: 13px; color: var(--cinza); margin-top: 2px; }
-.acoes { display: flex; align-items: center; gap: 10px; }
+.acoes { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.edicao { width: 100%; border-top: 1px solid var(--borda); padding-top: 12px; }
 .status { font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 20px; }
-.status.ativa { background: #e6f4ea; color: #1a7f37; }
+.status.ativa { background: #e6f4ea; color: #146c2e; }
 .status.cancelada { background: #f4e6e6; color: #b00020; }
+
+/* Agenda */
+.agenda-controles { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 10px; margin-bottom: 14px; }
+.agenda-controles .btn-secundario { padding: 9px 12px; }
+.agenda-legenda { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; font-size: 13px; color: var(--cinza); margin: 0 0 12px; }
+.amostra { padding: 2px 8px; border-radius: 5px; font-size: 12px; margin-left: 8px; }
+.amostra:first-child { margin-left: 0; }
+/* position: relative mantém os textos .so-leitor dentro da área de rolagem. */
+.agenda-rolagem { position: relative; overflow-x: auto; border: 1px solid var(--borda); border-radius: 8px; }
+.agenda { border-collapse: collapse; width: 100%; font-size: 12px; }
+.agenda caption { text-align: left; padding: 10px 12px; font-weight: 600; font-size: 14px; }
+.agenda caption::first-letter { text-transform: uppercase; }
+.agenda th, .agenda td { border: 1px solid var(--borda); text-align: center; padding: 0; height: 44px; min-width: 50px; }
+.agenda thead th { background: var(--tint); padding: 6px 2px; height: auto; }
+.agenda th:first-child {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  min-width: 130px;
+  max-width: 150px;
+  padding: 6px 8px;
+  text-align: left;
+  background: var(--tint);
+}
+.agenda-livre { background: #e6f4ea; color: #146c2e; }
+.agenda-livre button {
+  width: 100%;
+  height: 100%;
+  min-height: 44px;
+  background: none;
+  border: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+.agenda-livre button:hover { background: #c8e8d2; font-weight: 600; }
+.agenda-livre button:focus-visible { outline-offset: -3px; }
+.agenda-ocupada { background: #f4e6e6; color: #7a0f18; font-size: 11px; line-height: 1.25; }
+.agenda-passada { background: #efefef; color: #5a5a5a; }
 
 /* Rodapé */
 .rodape { text-align: center; padding: 16px; font-size: 12px; color: var(--cinza); }
+
+/* Telas pequenas */
+@media (max-width: 640px) {
+  .topo { padding: 12px 16px; }
+  .navegacao { order: 3; flex-basis: 100%; }
+  .conteudo { padding: 16px; }
+  .cartao { padding: 16px; }
+  .cartao-login { margin: 12px auto; }
+  .filtros { grid-template-columns: minmax(0, 1fr); }
+  .btn-secundario { padding: 9px 12px; font-size: 14px; }
+  input, select { font-size: 16px; }
+  .agenda-controles label { flex: 1 1 100%; order: -1; }
+  .agenda-controles input { width: 100%; }
+  .agenda-controles .btn-secundario { flex: 1; }
+}

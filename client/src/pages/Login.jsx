@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import { api } from '../api.js';
+import Mensagens from '../components/Mensagens.jsx';
+import { validarCadastro } from '../validacoes.js';
 
-export default function Login({ aoEntrar }) {
+export default function Login({ aoEntrar, mensagem }) {
   const [modo, setModo] = useState('login'); // 'login' ou 'cadastro'
   const [nome, setNome] = useState('');
   const [email, setEmail] = useState('');
@@ -13,10 +15,17 @@ export default function Login({ aoEntrar }) {
   async function enviar(e) {
     e.preventDefault();
     setErro('');
+    if (modo === 'cadastro') {
+      const problema = validarCadastro({ nome });
+      if (problema) {
+        setErro(problema);
+        return;
+      }
+    }
     setCarregando(true);
     try {
       if (modo === 'cadastro') {
-        await api.registrar({ nome, email, senha, tipo });
+        await api.registrar({ nome: nome.trim(), email, senha, tipo });
       }
       const resultado = await api.login({ email, senha });
       aoEntrar(resultado);
@@ -35,18 +44,24 @@ export default function Login({ aoEntrar }) {
         {modo === 'cadastro' && (
           <label>
             Nome
-            <input value={nome} onChange={(e) => setNome(e.target.value)} required />
+            <input autoComplete="name" value={nome} onChange={(e) => setNome(e.target.value)} required />
           </label>
         )}
 
         <label>
           E-mail
-          <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+          <input type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
         </label>
 
         <label>
           Senha
-          <input type="password" value={senha} onChange={(e) => setSenha(e.target.value)} required />
+          <input
+            type="password"
+            autoComplete={modo === 'login' ? 'current-password' : 'new-password'}
+            value={senha}
+            onChange={(e) => setSenha(e.target.value)}
+            required
+          />
         </label>
 
         {modo === 'cadastro' && (
@@ -59,7 +74,7 @@ export default function Login({ aoEntrar }) {
           </label>
         )}
 
-        {erro && <p className="erro">{erro}</p>}
+        <Mensagens erro={erro} aviso={mensagem} />
 
         <button className="btn" disabled={carregando}>
           {carregando ? 'Aguarde...' : modo === 'login' ? 'Entrar' : 'Cadastrar e entrar'}

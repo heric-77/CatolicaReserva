@@ -18,6 +18,16 @@ class ReservaController {
     res.status(201).json(apresentarReserva(reserva));
   };
 
+  editar = async (req, res) => {
+    const { salaId, data, horaInicio, horaFim } = req.body;
+    const reserva = await this.reservaService.editar(
+      Number(req.params.id),
+      { salaId, data, horaInicio, horaFim },
+      req.usuario
+    );
+    res.json(apresentarReserva(reserva));
+  };
+
   cancelar = async (req, res) => {
     const reserva = await this.reservaService.cancelar(Number(req.params.id), req.usuario);
     res.json(apresentarReserva(reserva));

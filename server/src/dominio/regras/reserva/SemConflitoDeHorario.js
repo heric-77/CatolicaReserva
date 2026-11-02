@@ -13,7 +13,9 @@ class SemConflitoDeHorario {
       reserva.salaId,
       reserva.data
     );
-    if (reservasDoDia.some((existente) => reserva.sobrepoe(existente))) {
+    // Ao editar, a própria reserva aparece na agenda e não conta como conflito.
+    const outras = reservasDoDia.filter((existente) => existente.id !== reserva.id);
+    if (outras.some((existente) => reserva.sobrepoe(existente))) {
       throw new ConflitoError('Já existe uma reserva para esta sala nesse horário.');
     }
   }

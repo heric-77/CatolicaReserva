@@ -44,8 +44,27 @@ class Reserva {
     return this.usuarioId === usuarioId;
   }
 
+  estaAtiva() {
+    return this.status === STATUS.ATIVA;
+  }
+
   cancelar() {
     this.status = STATUS.CANCELADA;
+  }
+
+  // Devolve uma cópia desta reserva com a nova sala, data e horário.
+  comAlteracoes({ salaId, data, horaInicio, horaFim }) {
+    return new Reserva({ ...this, salaId, data, horaInicio, horaFim });
+  }
+
+  // Momento em que a reserva começa (a data e a hora estão no fuso do servidor).
+  inicio() {
+    return new Date(`${this.data}T${this.horaInicio}`);
+  }
+
+  duracaoEmMinutos() {
+    const emMinutos = (hora) => Number(hora.slice(0, 2)) * 60 + Number(hora.slice(3, 5));
+    return emMinutos(this.horaFim) - emMinutos(this.horaInicio);
   }
 }
 

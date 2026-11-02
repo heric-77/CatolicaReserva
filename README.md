@@ -7,8 +7,7 @@ Sistema web para reservar salas de estudo e laboratórios, evitando conflitos de
 Arquitetura **cliente-servidor**: um cliente web (React) que conversa por uma API REST
 com um servidor (Node.js + Express), que por sua vez acessa um banco de dados MySQL.
 
-> Este repositório contém uma **entrega parcial (~40%)** do sistema. O núcleo já funciona
-> ponta a ponta; o que falta está listado em "Status do desenvolvimento".
+> O sistema funciona ponta a ponta; o que ainda falta está listado em "Status do desenvolvimento".
 
 ## Estrutura do projeto
 
@@ -78,35 +77,46 @@ Acesse `http://localhost:5173`, crie uma conta (ou entre com o admin) e faça um
 
 | Método | Rota | Descrição | Acesso |
 |---|---|---|---|
-| POST | `/api/auth/registrar` | Cria um usuário | público |
+| POST | `/api/auth/registrar` | Cria um aluno ou professor | público |
 | POST | `/api/auth/login` | Faz login e retorna o token | público |
 | GET | `/api/salas` | Lista as salas | logado |
 | POST | `/api/salas` | Cadastra uma sala | admin |
-| POST | `/api/reservas` | Cria uma reserva (valida conflito) | logado |
+| PUT | `/api/salas/:id` | Edita uma sala | admin |
+| DELETE | `/api/salas/:id` | Exclui uma sala e as reservas dela | admin |
+| POST | `/api/reservas` | Cria uma reserva (valida as regras) | logado |
+| PUT | `/api/reservas/:id` | Edita uma reserva ativa | dono / admin |
 | GET | `/api/reservas/minhas` | Lista as reservas do usuário | logado |
 | PATCH | `/api/reservas/:id/cancelar` | Cancela uma reserva | dono / admin |
 | GET | `/api/reservas` | Lista todas as reservas | admin |
+| GET | `/api/agenda?data=AAAA-MM-DD` | Horários ocupados de todas as salas na data | logado |
+| GET | `/api/usuarios` | Lista os usuários | admin |
+| PATCH | `/api/usuarios/:id/tipo` | Altera o tipo de um usuário | admin |
+| DELETE | `/api/usuarios/:id` | Exclui um usuário e as reservas dele | admin |
 
-## Status do desenvolvimento (~40%)
+## Regras de reserva
+
+Os limites ficam em `server/src/config/ambiente.js`:
+
+- Horário de funcionamento: das 07:00 às 22:00
+- Duração máxima de uma reserva: 4 horas
+- Antecedência máxima: 30 dias (não é possível reservar um horário que já passou)
+
+## Status do desenvolvimento
 
 ### Já implementado
 - Cadastro e login de usuários, com senha criptografada (bcrypt) e token JWT
-- Estrutura completa em camadas Controller → Service → Repository
-- Listagem de salas e cadastro de salas (admin)
-- Criação de reserva com a **regra central**: bloqueio de conflito de horário
-- Cancelamento de reserva (com verificação de permissão)
-- Listagem "minhas reservas" e "todas as reservas" (admin)
-- Cliente web em React: login/cadastro, nova reserva, lista de salas e minhas reservas
+- Arquitetura em camadas seguindo os princípios SOLID
+- Reserva com bloqueio de conflito de horário, edição e cancelamento
+- Regras de horário de funcionamento, duração máxima e antecedência
+- Agenda visual de disponibilidade por sala e horário
+- Administração: painel com todas as reservas, gestão de salas e de usuários
+- Validações e mensagens de erro no cliente, incluindo aviso de sessão expirada
+- Layout responsivo e melhorias de acessibilidade
+- Testes automatizados de unidade (`npm test` em `server/`)
 - Banco de dados MySQL com script de criação e dados iniciais
 
-### Ainda a fazer (restante ~60%)
-- Tela de administração para editar/excluir salas e gerenciar usuários
-- Consulta visual de disponibilidade por sala/horário (agenda/calendário)
-- Edição de reserva e regras extras (limite de horário, antecedência)
-- Painel do administrador com todas as reservas na interface
-- Validações e mensagens de erro mais completas no cliente
-- Testes automatizados de integração (os testes de unidade das regras já existem)
-- Melhorias de layout, responsividade e acessibilidade
+### Ainda a fazer
+- Testes automatizados de integração
 - Configuração de implantação (deploy)
 
 ## Documentação

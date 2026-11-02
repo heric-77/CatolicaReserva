@@ -10,18 +10,28 @@ const BcryptGeradorHash = require('./infra/seguranca/BcryptGeradorHash');
 const JwtServicoToken = require('./infra/seguranca/JwtServicoToken');
 
 const CamposObrigatorios = require('./dominio/regras/reserva/CamposObrigatorios');
+const FormatoDeDataEHora = require('./dominio/regras/reserva/FormatoDeDataEHora');
 const HorarioValido = require('./dominio/regras/reserva/HorarioValido');
+const HorarioDeFuncionamento = require('./dominio/regras/reserva/HorarioDeFuncionamento');
+const LimiteDeDuracao = require('./dominio/regras/reserva/LimiteDeDuracao');
+const SemHorarioNoPassado = require('./dominio/regras/reserva/SemHorarioNoPassado');
+const AntecedenciaMaxima = require('./dominio/regras/reserva/AntecedenciaMaxima');
 const SalaDeveExistir = require('./dominio/regras/reserva/SalaDeveExistir');
 const SemConflitoDeHorario = require('./dominio/regras/reserva/SemConflitoDeHorario');
-const ApenasDonoOuAdmin = require('./dominio/regras/cancelamento/ApenasDonoOuAdmin');
+const ApenasDonoOuAdmin = require('./dominio/regras/alteracao/ApenasDonoOuAdmin');
+const SomenteReservaAtiva = require('./dominio/regras/alteracao/SomenteReservaAtiva');
 
 const ReservaService = require('./services/ReservaService');
 const SalaService = require('./services/SalaService');
 const UsuarioService = require('./services/UsuarioService');
+const GestaoDeUsuariosService = require('./services/GestaoDeUsuariosService');
+const AgendaService = require('./services/AgendaService');
 
 const AuthController = require('./http/controllers/AuthController');
 const SalaController = require('./http/controllers/SalaController');
 const ReservaController = require('./http/controllers/ReservaController');
+const UsuarioController = require('./http/controllers/UsuarioController');
+const AgendaController = require('./http/controllers/AgendaController');
 const { criarAutenticacao } = require('./http/middlewares/autenticacao');
 const criarApp = require('./app');
 
@@ -35,21 +45,41 @@ function criarContainer(config) {
   const servicoToken = new JwtServicoToken(config.jwt);
 
   // 2. Regras de negócio (a ordem da lista é a ordem de validação)
-  const regrasDeCriacao = [
+  const { abertura, fechamento, duracaoMaximaEmMinutos, antecedenciaMaximaEmDias } = config.reservas;
+  const regrasDeReserva = [
     new CamposObrigatorios(),
+    new FormatoDeDataEHora(),
     new HorarioValido(),
-    new SalaDeveExistir({ salaRepository }),
+    new HorarioDeFuncionamento({ abertura, fechamento }),
+    new LimiteDeDuracao({ maximoEmMinutos: duracaoMaximaEmMinutos }),
+    new SemHorarioNoPassado(),
+    new AntecedenciaMaxima({ maximoEmDias: antecedenciaMaximaEmDias }),
+    new SalaDeveExistir({ consultaDeSala: salaRepository }),
     new SemConflitoDeHorario({ agendaDeReservas: reservaRepository }),
   ];
-  const regrasDeCancelamento = [new ApenasDonoOuAdmin()];
+  const regrasDeEdicao = [new ApenasDonoOuAdmin({ acao: 'editar' }), new SomenteReservaAtiva()];
+  const regrasDeCancelamento = [new ApenasDonoOuAdmin({ acao: 'cancelar' })];
 
   // 3. Services (casos de uso)
-  const reservaService = new ReservaService({ reservaRepository, regrasDeCriacao, regrasDeCancelamento });
+  const reservaService = new ReservaService({
+    reservaRepository,
+    regrasDeReserva,
+    regrasDeEdicao,
+    regrasDeCancelamento,
+  });
   const salaService = new SalaService({ salaRepository });
   const usuarioService = new UsuarioService({
     usuarioRepository,
     geradorHash,
     geradorToken: servicoToken,
+  });
+  const gestaoDeUsuariosService = new GestaoDeUsuariosService({
+    gestaoDeUsuariosRepository: usuarioRepository,
+  });
+  const agendaService = new AgendaService({
+    agendaDoDia: reservaRepository,
+    abertura,
+    fechamento,
   });
 
   // 4. Camada HTTP
@@ -57,6 +87,8 @@ function criarContainer(config) {
     authController: new AuthController({ usuarioService }),
     salaController: new SalaController({ salaService }),
     reservaController: new ReservaController({ reservaService }),
+    usuarioController: new UsuarioController({ gestaoDeUsuariosService }),
+    agendaController: new AgendaController({ agendaService }),
     autenticar: criarAutenticacao(servicoToken),
   });
 

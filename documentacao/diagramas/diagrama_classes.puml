@@ -17,8 +17,9 @@ class ReservaController {
 
 class ReservaService {
     - reservaRepository : ReservaRepository
-    - regrasDeCriacao : RegraReserva[]
-    - regrasDeCancelamento : RegraCancelamento[]
+    - regrasDeReserva : RegraReserva[]
+    - regrasDeEdicao : RegraAlteracao[]
+    - regrasDeCancelamento : RegraAlteracao[]
     + criar(dadosReserva) : Reserva
     + cancelar(id, usuario) : Reserva
     + listarMinhas(usuarioId) : Reserva[]
@@ -47,7 +48,7 @@ interface RegraReserva <<contrato>> {
     + validar(reserva)
 }
 
-interface RegraCancelamento <<contrato>> {
+interface RegraAlteracao <<contrato>> {
     + validar(reserva, usuario)
 }
 
@@ -107,14 +108,14 @@ end note
 ReservaController --> ReservaService : "usa"
 ReservaService --> ReservaRepository : "usa"
 ReservaService --> RegraReserva : "executa"
-ReservaService --> RegraCancelamento : "executa"
+ReservaService --> RegraAlteracao : "executa"
 ReservaService ..> Reserva : "cria / gerencia"
 
 CamposObrigatorios ..|> RegraReserva
 HorarioValido ..|> RegraReserva
 SalaDeveExistir ..|> RegraReserva
 SemConflitoDeHorario ..|> RegraReserva
-ApenasDonoOuAdmin ..|> RegraCancelamento
+ApenasDonoOuAdmin ..|> RegraAlteracao
 
 SalaDeveExistir --> SalaRepository : "usa"
 SemConflitoDeHorario --> AgendaDeReservas : "usa"

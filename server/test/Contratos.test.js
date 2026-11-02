@@ -5,7 +5,10 @@ const assert = require('node:assert/strict');
 
 const ReservaRepository = require('../src/dominio/contratos/ReservaRepository');
 const AgendaDeReservas = require('../src/dominio/contratos/AgendaDeReservas');
+const AgendaDoDia = require('../src/dominio/contratos/AgendaDoDia');
 const SalaRepository = require('../src/dominio/contratos/SalaRepository');
+const ConsultaDeSala = require('../src/dominio/contratos/ConsultaDeSala');
+const GestaoDeUsuariosRepository = require('../src/dominio/contratos/GestaoDeUsuariosRepository');
 const UsuarioRepository = require('../src/dominio/contratos/UsuarioRepository');
 const GeradorHash = require('../src/dominio/contratos/GeradorHash');
 const GeradorToken = require('../src/dominio/contratos/GeradorToken');
@@ -24,7 +27,10 @@ describe('Implementações reais cumprem seus contratos', () => {
   const casos = [
     [ReservaRepository, new MySqlReservaRepository(poolFalso)],
     [AgendaDeReservas, new MySqlReservaRepository(poolFalso)],
+    [AgendaDoDia, new MySqlReservaRepository(poolFalso)],
     [SalaRepository, new MySqlSalaRepository(poolFalso)],
+    [ConsultaDeSala, new MySqlSalaRepository(poolFalso)],
+    [GestaoDeUsuariosRepository, new MySqlUsuarioRepository(poolFalso)],
     [UsuarioRepository, new MySqlUsuarioRepository(poolFalso)],
     [GeradorHash, new BcryptGeradorHash()],
     [GeradorToken, new JwtServicoToken({ segredo: 'x' })],
@@ -42,8 +48,11 @@ describe('Fakes de teste cumprem os mesmos contratos', () => {
     const reservas = new fakes.ReservaRepositoryEmMemoria();
     ReservaRepository.verificar(reservas);
     AgendaDeReservas.verificar(reservas);
+    AgendaDoDia.verificar(reservas);
     SalaRepository.verificar(new fakes.SalaRepositoryEmMemoria());
+    ConsultaDeSala.verificar(new fakes.SalaRepositoryEmMemoria());
     UsuarioRepository.verificar(new fakes.UsuarioRepositoryEmMemoria());
+    GestaoDeUsuariosRepository.verificar(new fakes.UsuarioRepositoryEmMemoria());
   });
 });
 
@@ -54,7 +63,7 @@ describe('Contrato.verificar', () => {
     }
     assert.throws(
       () => SalaRepository.verificar(new RepositorioIncompleto()),
-      /RepositorioIncompleto não implementa o contrato SalaRepository: faltando buscarPorId, salvar/
+      /RepositorioIncompleto não implementa o contrato SalaRepository: faltando buscarPorId, salvar, atualizar, remover/
     );
   });
 });

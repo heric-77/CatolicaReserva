@@ -1,22 +1,20 @@
 import { useEffect, useState } from 'react';
 import { api } from '../api.js';
+import FormularioReserva from '../components/FormularioReserva.jsx';
+import Mensagens from '../components/Mensagens.jsx';
+import { TIPO_SALA, formatarData, formatarHora } from '../formatos.js';
 
-const TIPO_LABEL = { SALA_ESTUDO: 'Sala de estudo', LABORATORIO: 'Laboratório' };
-
-export default function Reservas() {
+export default function Reservas({ horarioEscolhido }) {
   const [salas, setSalas] = useState([]);
   const [reservas, setReservas] = useState([]);
   const [erro, setErro] = useState('');
   const [aviso, setAviso] = useState('');
-
-  // Campos do formulário de nova reserva
-  const [salaId, setSalaId] = useState('');
-  const [data, setData] = useState('');
-  const [horaInicio, setHoraInicio] = useState('');
-  const [horaFim, setHoraFim] = useState('');
+  const [editandoId, setEditandoId] = useState(null);
+  // Mudar a chave recria o formulário de nova reserva, limpando os campos.
+  const [chaveFormulario, setChaveFormulario] = useState(0);
+  const [inicial, setInicial] = useState(horarioEscolhido || {});
 
   async function carregar() {
-    setErro('');
     try {
       const [listaSalas, listaReservas] = await Promise.all([
         api.listarSalas(),
@@ -24,7 +22,6 @@ export default function Reservas() {
       ]);
       setSalas(listaSalas);
       setReservas(listaReservas);
-      if (listaSalas.length && !salaId) setSalaId(String(listaSalas[0].id));
     } catch (err) {
       setErro(err.message);
     }
@@ -32,21 +29,27 @@ export default function Reservas() {
 
   useEffect(() => { carregar(); }, []);
 
-  async function reservar(e) {
-    e.preventDefault();
+  async function reservar(dados) {
     setErro('');
     setAviso('');
-    try {
-      await api.criarReserva({ salaId: Number(salaId), data, horaInicio, horaFim });
-      setAviso('Reserva realizada com sucesso!');
-      setData(''); setHoraInicio(''); setHoraFim('');
-      carregar();
-    } catch (err) {
-      setErro(err.message);
-    }
+    await api.criarReserva(dados);
+    setAviso('Reserva realizada com sucesso!');
+    setInicial({});
+    setChaveFormulario((chave) => chave + 1);
+    carregar();
+  }
+
+  async function salvarEdicao(id, dados) {
+    setErro('');
+    setAviso('');
+    await api.editarReserva(id, dados);
+    setAviso('Reserva alterada com sucesso!');
+    setEditandoId(null);
+    carregar();
   }
 
   async function cancelar(id) {
+    if (!window.confirm('Deseja cancelar esta reserva?')) return;
     setErro('');
     setAviso('');
     try {
@@ -63,46 +66,21 @@ export default function Reservas() {
       {/* Coluna: nova reserva */}
       <section className="cartao">
         <h2>Nova reserva</h2>
-        <form onSubmit={reservar} className="formulario">
-          <label>
-            Sala
-            <select value={salaId} onChange={(e) => setSalaId(e.target.value)} required>
-              {salas.map((s) => (
-                <option key={s.id} value={s.id}>
-                  {s.nome} ({TIPO_LABEL[s.tipo]})
-                </option>
-              ))}
-            </select>
-          </label>
-
-          <label>
-            Data
-            <input type="date" value={data} onChange={(e) => setData(e.target.value)} required />
-          </label>
-
-          <div className="linha">
-            <label>
-              Início
-              <input type="time" value={horaInicio} onChange={(e) => setHoraInicio(e.target.value)} required />
-            </label>
-            <label>
-              Fim
-              <input type="time" value={horaFim} onChange={(e) => setHoraFim(e.target.value)} required />
-            </label>
-          </div>
-
-          {erro && <p className="erro">{erro}</p>}
-          {aviso && <p className="aviso">{aviso}</p>}
-
-          <button className="btn">Reservar</button>
-        </form>
+        <FormularioReserva
+          key={chaveFormulario}
+          salas={salas}
+          inicial={inicial}
+          rotulo="Reservar"
+          aoEnviar={reservar}
+        />
 
         <h3 className="subtitulo">Salas disponíveis</h3>
+        {salas.length === 0 && <p className="vazio">Nenhuma sala cadastrada.</p>}
         <ul className="lista-salas">
           {salas.map((s) => (
             <li key={s.id}>
               <strong>{s.nome}</strong>
-              <span className="tag">{TIPO_LABEL[s.tipo]}</span>
+              <span className="tag">{TIPO_SALA[s.tipo]}</span>
               <small>{s.capacidade} lugares · {s.recursos || 'sem recursos'}</small>
             </li>
           ))}
@@ -112,6 +90,7 @@ export default function Reservas() {
       {/* Coluna: minhas reservas */}
       <section className="cartao">
         <h2>Minhas reservas</h2>
+        <Mensagens erro={erro} aviso={aviso} />
         {reservas.length === 0 && <p className="vazio">Você ainda não tem reservas.</p>}
         <ul className="lista-reservas">
           {reservas.map((r) => (
@@ -119,27 +98,43 @@ export default function Reservas() {
               <div>
                 <strong>{r.sala_nome}</strong>
                 <div className="detalhe">
-                  {formatarData(r.data)} · {r.hora_inicio?.slice(0, 5)}–{r.hora_fim?.slice(0, 5)}
+                  {formatarData(r.data)} · {formatarHora(r.hora_inicio)}–{formatarHora(r.hora_fim)}
                 </div>
               </div>
               <div className="acoes">
                 <span className={`status ${r.status.toLowerCase()}`}>{r.status}</span>
-                {r.status === 'ATIVA' && (
-                  <button className="btn-secundario" onClick={() => cancelar(r.id)}>
-                    Cancelar
-                  </button>
+                {r.status === 'ATIVA' && editandoId !== r.id && (
+                  <>
+                    <button className="btn-secundario" onClick={() => setEditandoId(r.id)}>
+                      Editar
+                    </button>
+                    <button className="btn-secundario" onClick={() => cancelar(r.id)}>
+                      Cancelar
+                    </button>
+                  </>
                 )}
               </div>
+              {editandoId === r.id && (
+                <div className="edicao">
+                  <FormularioReserva
+                    salas={salas}
+                    inicial={{
+                      salaId: r.sala_id,
+                      data: r.data,
+                      horaInicio: formatarHora(r.hora_inicio),
+                      horaFim: formatarHora(r.hora_fim),
+                    }}
+                    rotulo="Salvar alterações"
+                    aoEnviar={(dados) => salvarEdicao(r.id, dados)}
+                    aoDesistir={() => setEditandoId(null)}
+                    focar
+                  />
+                </div>
+              )}
             </li>
           ))}
         </ul>
       </section>
     </div>
   );
-}
-
-function formatarData(iso) {
-  if (!iso) return '';
-  const d = new Date(iso);
-  return d.toLocaleDateString('pt-BR', { timeZone: 'UTC' });
 }

@@ -5,31 +5,39 @@ const Reserva = require('../dominio/entidades/Reserva');
 const { NaoEncontradoError } = require('../dominio/erros');
 const ReservaRepository = require('../dominio/contratos/ReservaRepository');
 const RegraReserva = require('../dominio/contratos/RegraReserva');
-const RegraCancelamento = require('../dominio/contratos/RegraCancelamento');
+const RegraAlteracao = require('../dominio/contratos/RegraAlteracao');
 
 class ReservaService {
-  constructor({ reservaRepository, regrasDeCriacao = [], regrasDeCancelamento = [] }) {
+  constructor({
+    reservaRepository,
+    regrasDeReserva = [],
+    regrasDeEdicao = [],
+    regrasDeCancelamento = [],
+  }) {
     this.reservaRepository = ReservaRepository.verificar(reservaRepository);
-    this.regrasDeCriacao = regrasDeCriacao.map((regra) => RegraReserva.verificar(regra));
-    this.regrasDeCancelamento = regrasDeCancelamento.map((regra) =>
-      RegraCancelamento.verificar(regra)
-    );
+    this.regrasDeReserva = regrasDeReserva.map((regra) => RegraReserva.verificar(regra));
+    this.regrasDeEdicao = regrasDeEdicao.map((regra) => RegraAlteracao.verificar(regra));
+    this.regrasDeCancelamento = regrasDeCancelamento.map((regra) => RegraAlteracao.verificar(regra));
   }
 
   async criar({ usuarioId, salaId, data, horaInicio, horaFim }) {
     const reserva = new Reserva({ usuarioId, salaId, data, horaInicio, horaFim });
-    // As regras rodam na ordem em que foram registradas no container.
-    for (const regra of this.regrasDeCriacao) {
-      await regra.validar(reserva);
-    }
+    await this.#validarReserva(reserva);
     return this.reservaRepository.salvar(reserva);
   }
 
-  async cancelar(id, usuario) {
-    const reserva = await this.reservaRepository.buscarPorId(id);
-    if (!reserva) {
-      throw new NaoEncontradoError('Reserva não encontrada.');
+  async editar(id, dados, usuario) {
+    const reserva = await this.#buscar(id);
+    for (const regra of this.regrasDeEdicao) {
+      await regra.validar(reserva, usuario);
     }
+    const alterada = reserva.comAlteracoes(dados);
+    await this.#validarReserva(alterada);
+    return this.reservaRepository.atualizar(alterada);
+  }
+
+  async cancelar(id, usuario) {
+    const reserva = await this.#buscar(id);
     for (const regra of this.regrasDeCancelamento) {
       await regra.validar(reserva, usuario);
     }
@@ -43,6 +51,21 @@ class ReservaService {
 
   async listarTodas() {
     return this.reservaRepository.listarTodas();
+  }
+
+  // As regras rodam na ordem em que foram registradas no container.
+  async #validarReserva(reserva) {
+    for (const regra of this.regrasDeReserva) {
+      await regra.validar(reserva);
+    }
+  }
+
+  async #buscar(id) {
+    const reserva = await this.reservaRepository.buscarPorId(id);
+    if (!reserva) {
+      throw new NaoEncontradoError('Reserva não encontrada.');
+    }
+    return reserva;
   }
 }
 

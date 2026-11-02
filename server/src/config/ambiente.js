@@ -15,4 +15,11 @@ module.exports = {
     segredo: process.env.JWT_SECRET || 'troque-este-segredo',
     expiracao: '8h',
   },
+  // Limites das regras de reserva.
+  reservas: {
+    abertura: '07:00',
+    fechamento: '22:00',
+    duracaoMaximaEmMinutos: 4 * 60,
+    antecedenciaMaximaEmDias: 30,
+  },
 };
