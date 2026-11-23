@@ -1,6 +1,0 @@
-{
-  "sonarlint.connectedMode.project": {
-    "connectionId": "sonarqube-local",
-    "projectKey": "catolicareserva"
-  }
-}
