@@ -6,3 +6,9 @@ client/dist/
 .env
 # logs
 *.log
+# relatórios de cobertura dos testes
+coverage/
+# arquivos do scanner do Sonar
+.scannerwork/
+# token do SonarQube (não versionar)
+sonar.env
