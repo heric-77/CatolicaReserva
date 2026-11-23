@@ -1,156 +1,114 @@
-// Cadastro, edição e exclusão de salas.
-import { useEffect, useState } from 'react';
+// Administração das salas: lista, cadastro, edição (painel lateral) e exclusão.
+import { useState } from 'react';
+import { DoorOpen, Pencil, Plus, Trash2, Users } from 'lucide-react';
 import { api } from '../../api.js';
+import Dialogo from '../../components/Dialogo.jsx';
+import FormularioSala from '../../components/FormularioSala.jsx';
+import IconeSala from '../../components/IconeSala.jsx';
 import Mensagens from '../../components/Mensagens.jsx';
+import Vazio from '../../components/Vazio.jsx';
+import { useAcoes } from '../../contexto/Acoes.js';
+import { useAvisos } from '../../contexto/Avisos.jsx';
 import { TIPO_SALA } from '../../formatos.js';
-import { validarSala } from '../../validacoes.js';
-
-const SALA_VAZIA = { nome: '', tipo: 'SALA_ESTUDO', capacidade: '', recursos: '' };
+import { useCarregar } from '../../useCarregar.js';
 
 export default function AdminSalas() {
-  const [salas, setSalas] = useState([]);
-  const [campos, setCampos] = useState(SALA_VAZIA);
-  const [editandoId, setEditandoId] = useState(null);
-  const [erro, setErro] = useState('');
-  const [aviso, setAviso] = useState('');
+  const { versao, confirmar, recarregar } = useAcoes();
+  const avisar = useAvisos();
+  // null = painel fechado; {} = nova sala; { sala } = edição
+  const [painel, setPainel] = useState(null);
+  const { dados, erro } = useCarregar(() => api.listarSalas(), [versao]);
+  const salas = dados ?? [];
 
-  async function carregar() {
-    try {
-      setSalas(await api.listarSalas());
-    } catch (err) {
-      setErro(err.message);
+  async function salvar(campos) {
+    if (painel.sala) {
+      await api.atualizarSala(painel.sala.id, campos);
+      avisar('Sala alterada com sucesso!');
+    } else {
+      await api.criarSala(campos);
+      avisar('Sala cadastrada com sucesso!');
     }
-  }
-
-  useEffect(() => { void carregar(); }, []);
-
-  function alterarCampo(nome, valor) {
-    setCampos((atuais) => ({ ...atuais, [nome]: valor }));
-  }
-
-  function limparFormulario() {
-    setCampos(SALA_VAZIA);
-    setEditandoId(null);
-  }
-
-  function editar(sala) {
-    setErro('');
-    setAviso('');
-    setEditandoId(sala.id);
-    setCampos({
-      nome: sala.nome,
-      tipo: sala.tipo,
-      capacidade: String(sala.capacidade),
-      recursos: sala.recursos,
-    });
-  }
-
-  async function salvar(e) {
-    e.preventDefault();
-    setAviso('');
-    const problema = validarSala(campos);
-    setErro(problema || '');
-    if (problema) return;
-
-    try {
-      const dados = { ...campos, nome: campos.nome.trim(), capacidade: Number(campos.capacidade) };
-      if (editandoId) {
-        await api.atualizarSala(editandoId, dados);
-        setAviso('Sala alterada com sucesso!');
-      } else {
-        await api.criarSala(dados);
-        setAviso('Sala cadastrada com sucesso!');
-      }
-      limparFormulario();
-      await carregar();
-    } catch (err) {
-      setErro(err.message);
-    }
+    setPainel(null);
+    recarregar();
   }
 
   async function excluir(sala) {
-    const aviso = `Excluir a sala "${sala.nome}"?\n\nTodas as reservas desta sala também serão excluídas, inclusive as de outros usuários. Isso não pode ser desfeito.`;
-    if (!window.confirm(aviso)) return;
-    setErro('');
-    setAviso('');
+    const confirmou = await confirmar({
+      titulo: `Excluir "${sala.nome}"?`,
+      mensagem: 'Todas as reservas desta sala também serão excluídas, inclusive as de outros usuários. Isso não pode ser desfeito.',
+      acao: 'Excluir sala',
+    });
+    if (!confirmou) return;
     try {
       await api.excluirSala(sala.id);
-      setAviso('Sala excluída.');
-      if (editandoId === sala.id) limparFormulario();
-      await carregar();
+      avisar('Sala excluída.');
+      recarregar();
     } catch (err) {
-      setErro(err.message);
+      avisar(err.message, 'erro');
     }
   }
 
   return (
-    <div className="grade">
-      <section className="cartao">
-        <h2>{editandoId ? 'Editar sala' : 'Nova sala'}</h2>
-        <form onSubmit={salvar} className="formulario" noValidate>
-          <label>
-            Nome
-            <input value={campos.nome} onChange={(e) => alterarCampo('nome', e.target.value)} />
-          </label>
-          <label>
-            Tipo
-            <select value={campos.tipo} onChange={(e) => alterarCampo('tipo', e.target.value)}>
-              {Object.entries(TIPO_SALA).map(([valor, rotulo]) => (
-                <option key={valor} value={valor}>{rotulo}</option>
-              ))}
-            </select>
-          </label>
-          <label>
-            Capacidade
-            <input
-              type="number"
-              min="1"
-              step="1"
-              value={campos.capacidade}
-              onChange={(e) => alterarCampo('capacidade', e.target.value)}
-            />
-          </label>
-          <label>
-            Recursos
-            <input value={campos.recursos} onChange={(e) => alterarCampo('recursos', e.target.value)} />
-          </label>
+    <section className="cartao">
+      <div className="cartao-cabecalho com-acao">
+        <div>
+          <h2>Salas cadastradas</h2>
+          <p>{salas.length} {salas.length === 1 ? 'sala' : 'salas'}</p>
+        </div>
+        <button type="button" className="btn" onClick={() => setPainel({})}>
+          <Plus size={16} aria-hidden="true" />
+          Nova sala
+        </button>
+      </div>
 
-          <Mensagens erro={erro} aviso={aviso} />
+      <Mensagens erro={erro} />
+      {dados && salas.length === 0 && <Vazio icone={DoorOpen}>Nenhuma sala cadastrada.</Vazio>}
 
-          <div className="botoes-formulario">
-            <button type="submit" className="btn">{editandoId ? 'Salvar alterações' : 'Cadastrar sala'}</button>
-            {editandoId && (
-              <button type="button" className="btn-secundario" onClick={limparFormulario}>
-                Voltar
+      <ul className="lista-reservas">
+        {salas.map((s) => (
+          <li key={s.id}>
+            <IconeSala tipo={s.tipo} />
+            <div className="item-reserva-info">
+              <strong>{s.nome}</strong>
+              <div className="detalhe">
+                <Users size={14} aria-hidden="true" />
+                {TIPO_SALA[s.tipo]} · {s.capacidade} lugares
+              </div>
+              <div className="detalhe">{s.recursos || 'sem recursos'}</div>
+            </div>
+            <div className="acoes">
+              <button
+                type="button"
+                className="btn-secundario"
+                aria-label={`Editar ${s.nome}`}
+                onClick={() => setPainel({ sala: s })}
+              >
+                <Pencil size={14} aria-hidden="true" />
+                Editar
               </button>
-            )}
-          </div>
-        </form>
-      </section>
+              <button
+                type="button"
+                className="btn-secundario perigo"
+                aria-label={`Excluir ${s.nome}`}
+                onClick={() => excluir(s)}
+              >
+                <Trash2 size={14} aria-hidden="true" />
+                Excluir
+              </button>
+            </div>
+          </li>
+        ))}
+      </ul>
 
-      <section className="cartao">
-        <h2>Salas cadastradas</h2>
-        {salas.length === 0 && <p className="vazio">Nenhuma sala cadastrada.</p>}
-        <ul className="lista-reservas">
-          {salas.map((s) => (
-            <li key={s.id}>
-              <div>
-                <strong>{s.nome}</strong>
-                <div className="detalhe">{TIPO_SALA[s.tipo]} · {s.capacidade} lugares</div>
-                <div className="detalhe">{s.recursos || 'sem recursos'}</div>
-              </div>
-              <div className="acoes">
-                <button className="btn-secundario" aria-label={`Editar ${s.nome}`} onClick={() => editar(s)}>
-                  Editar
-                </button>
-                <button className="btn-secundario" aria-label={`Excluir ${s.nome}`} onClick={() => excluir(s)}>
-                  Excluir
-                </button>
-              </div>
-            </li>
-          ))}
-        </ul>
-      </section>
-    </div>
+      {painel && (
+        <Dialogo
+          titulo={painel.sala ? 'Editar sala' : 'Nova sala'}
+          descricao={painel.sala ? 'Altere os dados e salve.' : 'Cadastre uma sala de estudo ou laboratório.'}
+          aoFechar={() => setPainel(null)}
+        >
+          <FormularioSala sala={painel.sala} aoEnviar={salvar} aoDesistir={() => setPainel(null)} />
+        </Dialogo>
+      )}
+    </section>
   );
 }

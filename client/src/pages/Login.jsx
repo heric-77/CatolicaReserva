@@ -1,7 +1,15 @@
 import { useState } from 'react';
+import { CalendarDays, Clock, ShieldCheck } from 'lucide-react';
 import { api } from '../api.js';
+import Logo from '../components/Logo.jsx';
 import Mensagens from '../components/Mensagens.jsx';
 import { validarCadastro } from '../validacoes.js';
+
+const DESTAQUES = [
+  { icone: CalendarDays, texto: 'Veja os horários livres de todas as salas em uma única agenda.' },
+  { icone: Clock, texto: 'Reserve em segundos, sem conflito com outras reservas.' },
+  { icone: ShieldCheck, texto: 'Altere ou cancele quando precisar, direto pelo celular.' },
+];
 
 export default function Login({ aoEntrar, mensagem }) {
   const [modo, setModo] = useState('login'); // 'login' ou 'cadastro'
@@ -12,10 +20,12 @@ export default function Login({ aoEntrar, mensagem }) {
   const [erro, setErro] = useState('');
   const [carregando, setCarregando] = useState(false);
 
+  const cadastro = modo === 'cadastro';
+
   async function enviar(e) {
     e.preventDefault();
     setErro('');
-    if (modo === 'cadastro') {
+    if (cadastro) {
       const problema = validarCadastro({ nome });
       if (problema) {
         setErro(problema);
@@ -24,7 +34,7 @@ export default function Login({ aoEntrar, mensagem }) {
     }
     setCarregando(true);
     try {
-      if (modo === 'cadastro') {
+      if (cadastro) {
         await api.registrar({ nome: nome.trim(), email, senha, tipo });
       }
       const resultado = await api.login({ email, senha });
@@ -36,60 +46,96 @@ export default function Login({ aoEntrar, mensagem }) {
     }
   }
 
+  let rotuloDoBotao = cadastro ? 'Cadastrar e entrar' : 'Entrar';
+  if (carregando) rotuloDoBotao = 'Aguarde...';
+
   return (
-    <div className="cartao cartao-login">
-      <h2>{modo === 'login' ? 'Entrar' : 'Criar conta'}</h2>
+    <div className="tela-login">
+      <section className="painel-marca">
+        <Logo claro />
+        <div className="painel-marca-texto">
+          <p className="painel-marca-titulo">Reserve salas de estudo e laboratórios sem complicação.</p>
+          <ul>
+            {DESTAQUES.map(({ icone: Icone, texto }) => (
+              <li key={texto}>
+                <span className="painel-marca-icone" aria-hidden="true"><Icone size={18} /></span>
+                {texto}
+              </li>
+            ))}
+          </ul>
+        </div>
+        <p className="painel-marca-rodape">Sistema de Reserva de Salas de Estudo e Laboratórios</p>
+      </section>
 
-      <form onSubmit={enviar} className="formulario">
-        {modo === 'cadastro' && (
-          <label>
-            Nome
-            <input autoComplete="name" value={nome} onChange={(e) => setNome(e.target.value)} required />
-          </label>
-        )}
+      <section className="painel-formulario">
+        <div className="caixa-login">
+          <h2>{cadastro ? 'Criar conta' : 'Entrar'}</h2>
+          <p className="caixa-login-descricao">
+            {cadastro
+              ? 'Preencha seus dados para começar a reservar.'
+              : 'Use seu e-mail e senha para acessar suas reservas.'}
+          </p>
 
-        <label>
-          E-mail
-          <input type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
-        </label>
+          <form onSubmit={enviar} className="formulario">
+            {cadastro && (
+              <label>
+                Nome
+                <input autoComplete="name" value={nome} onChange={(e) => setNome(e.target.value)} required />
+              </label>
+            )}
 
-        <label>
-          Senha
-          <input
-            type="password"
-            autoComplete={modo === 'login' ? 'current-password' : 'new-password'}
-            value={senha}
-            onChange={(e) => setSenha(e.target.value)}
-            required
-          />
-        </label>
+            <label>
+              E-mail
+              <input
+                type="email"
+                autoComplete="email"
+                placeholder="voce@catolicasc.edu.br"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
+            </label>
 
-        {modo === 'cadastro' && (
-          <label>
-            Tipo
-            <select value={tipo} onChange={(e) => setTipo(e.target.value)}>
-              <option value="ALUNO">Aluno</option>
-              <option value="PROFESSOR">Professor</option>
-            </select>
-          </label>
-        )}
+            <label>
+              Senha
+              <input
+                type="password"
+                autoComplete={cadastro ? 'new-password' : 'current-password'}
+                value={senha}
+                onChange={(e) => setSenha(e.target.value)}
+                required
+              />
+            </label>
 
-        <Mensagens erro={erro} aviso={mensagem} />
+            {cadastro && (
+              <label>
+                Tipo
+                <select value={tipo} onChange={(e) => setTipo(e.target.value)}>
+                  <option value="ALUNO">Aluno</option>
+                  <option value="PROFESSOR">Professor</option>
+                </select>
+              </label>
+            )}
 
-        <button type="submit" className="btn" disabled={carregando}>
-          {carregando ? 'Aguarde...' : modo === 'login' ? 'Entrar' : 'Cadastrar e entrar'}
-        </button>
-      </form>
+            <Mensagens erro={erro} aviso={mensagem} />
 
-      <p className="troca-modo">
-        {modo === 'login' ? 'Ainda não tem conta?' : 'Já tem conta?'}{' '}
-        <button
-          className="btn-link"
-          onClick={() => { setModo(modo === 'login' ? 'cadastro' : 'login'); setErro(''); }}
-        >
-          {modo === 'login' ? 'Cadastre-se' : 'Fazer login'}
-        </button>
-      </p>
+            <button type="submit" className="btn btn-bloco" disabled={carregando}>
+              {rotuloDoBotao}
+            </button>
+          </form>
+
+          <p className="troca-modo">
+            {cadastro ? 'Já tem conta?' : 'Ainda não tem conta?'}{' '}
+            <button
+              type="button"
+              className="btn-link"
+              onClick={() => { setModo(cadastro ? 'login' : 'cadastro'); setErro(''); }}
+            >
+              {cadastro ? 'Fazer login' : 'Cadastre-se'}
+            </button>
+          </p>
+        </div>
+      </section>
     </div>
   );
 }

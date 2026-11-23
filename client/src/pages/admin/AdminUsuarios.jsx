@@ -1,64 +1,62 @@
-// Gestão de usuários: alterar o tipo e excluir.
-import { useEffect, useState } from 'react';
+// Administração: usuários (alterar o tipo de acesso e excluir).
+import { Trash2 } from 'lucide-react';
 import { api } from '../../api.js';
 import Mensagens from '../../components/Mensagens.jsx';
-import { TIPO_USUARIO } from '../../formatos.js';
+import { useAcoes } from '../../contexto/Acoes.js';
+import { useAvisos } from '../../contexto/Avisos.jsx';
+import { TIPO_USUARIO, iniciais } from '../../formatos.js';
+import { useCarregar } from '../../useCarregar.js';
 
-export default function AdminUsuarios({ usuario: eu }) {
-  const [usuarios, setUsuarios] = useState([]);
-  const [erro, setErro] = useState('');
-  const [aviso, setAviso] = useState('');
-
-  async function carregar() {
-    try {
-      setUsuarios(await api.listarUsuarios());
-    } catch (err) {
-      setErro(err.message);
-    }
-  }
-
-  useEffect(() => { void carregar(); }, []);
+export default function AdminUsuarios() {
+  const { usuario: eu, versao, confirmar, recarregar } = useAcoes();
+  const avisar = useAvisos();
+  const { dados, erro } = useCarregar(() => api.listarUsuarios(), [versao]);
+  const usuarios = dados ?? [];
 
   async function alterarTipo(usuario, tipo) {
-    setErro('');
-    setAviso('');
     try {
       await api.alterarTipoUsuario(usuario.id, tipo);
-      setAviso(`${usuario.nome} agora é ${TIPO_USUARIO[tipo]}.`);
+      avisar(`${usuario.nome} agora é ${TIPO_USUARIO[tipo]}.`);
     } catch (err) {
-      setErro(err.message);
+      avisar(err.message, 'erro');
     }
-    await carregar();
+    recarregar();
   }
 
   async function excluir(usuario) {
-    const aviso = `Excluir o usuário ${usuario.nome}?\n\nTodas as reservas deste usuário também serão excluídas. Isso não pode ser desfeito.`;
-    if (!window.confirm(aviso)) return;
-    setErro('');
-    setAviso('');
+    const confirmou = await confirmar({
+      titulo: `Excluir ${usuario.nome}?`,
+      mensagem: 'Todas as reservas deste usuário também serão excluídas. Isso não pode ser desfeito.',
+      acao: 'Excluir usuário',
+    });
+    if (!confirmou) return;
     try {
       await api.excluirUsuario(usuario.id);
-      setAviso('Usuário excluído.');
-      await carregar();
+      avisar('Usuário excluído.');
+      recarregar();
     } catch (err) {
-      setErro(err.message);
+      avisar(err.message, 'erro');
     }
   }
 
   return (
     <section className="cartao">
-      <h2>Usuários</h2>
-      <Mensagens erro={erro} aviso={aviso} />
+      <div className="cartao-cabecalho">
+        <h2>Usuários</h2>
+        <p>Altere o tipo de acesso ou exclua usuários. Você não pode alterar a sua própria conta.</p>
+      </div>
+      <Mensagens erro={erro} />
       <ul className="lista-reservas">
         {usuarios.map((u) => (
           <li key={u.id}>
-            <div>
+            <span className="avatar" aria-hidden="true">{iniciais(u.nome)}</span>
+            <div className="item-reserva-info">
               <strong>{u.nome}{u.id === eu.id && ' (você)'}</strong>
               <div className="detalhe">{u.email}</div>
             </div>
             <div className="acoes">
               {u.id === eu.id ? (
-                <span className="detalhe">{TIPO_USUARIO[u.tipo]}</span>
+                <span className="tag">{TIPO_USUARIO[u.tipo]}</span>
               ) : (
                 <>
                   <select
@@ -70,7 +68,13 @@ export default function AdminUsuarios({ usuario: eu }) {
                       <option key={valor} value={valor}>{rotulo}</option>
                     ))}
                   </select>
-                  <button className="btn-secundario" aria-label={`Excluir ${u.nome}`} onClick={() => excluir(u)}>
+                  <button
+                    type="button"
+                    className="btn-secundario perigo"
+                    aria-label={`Excluir ${u.nome}`}
+                    onClick={() => excluir(u)}
+                  >
+                    <Trash2 size={14} aria-hidden="true" />
                     Excluir
                   </button>
                 </>
