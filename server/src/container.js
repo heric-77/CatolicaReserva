@@ -90,6 +90,7 @@ function criarContainer(config) {
     usuarioController: new UsuarioController({ gestaoDeUsuariosService }),
     agendaController: new AgendaController({ agendaService }),
     autenticar: criarAutenticacao(servicoToken),
+    origemPermitida: config.cors.origem,
   });
 
   return { app, pool };

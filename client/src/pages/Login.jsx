@@ -76,7 +76,7 @@ export default function Login({ aoEntrar, mensagem }) {
 
         <Mensagens erro={erro} aviso={mensagem} />
 
-        <button className="btn" disabled={carregando}>
+        <button type="submit" className="btn" disabled={carregando}>
           {carregando ? 'Aguarde...' : modo === 'login' ? 'Entrar' : 'Cadastrar e entrar'}
         </button>
       </form>

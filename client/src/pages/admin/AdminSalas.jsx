@@ -22,7 +22,7 @@ export default function AdminSalas() {
     }
   }
 
-  useEffect(() => { carregar(); }, []);
+  useEffect(() => { void carregar(); }, []);
 
   function alterarCampo(nome, valor) {
     setCampos((atuais) => ({ ...atuais, [nome]: valor }));
@@ -62,7 +62,7 @@ export default function AdminSalas() {
         setAviso('Sala cadastrada com sucesso!');
       }
       limparFormulario();
-      carregar();
+      await carregar();
     } catch (err) {
       setErro(err.message);
     }
@@ -77,7 +77,7 @@ export default function AdminSalas() {
       await api.excluirSala(sala.id);
       setAviso('Sala excluída.');
       if (editandoId === sala.id) limparFormulario();
-      carregar();
+      await carregar();
     } catch (err) {
       setErro(err.message);
     }
@@ -118,7 +118,7 @@ export default function AdminSalas() {
           <Mensagens erro={erro} aviso={aviso} />
 
           <div className="botoes-formulario">
-            <button className="btn">{editandoId ? 'Salvar alterações' : 'Cadastrar sala'}</button>
+            <button type="submit" className="btn">{editandoId ? 'Salvar alterações' : 'Cadastrar sala'}</button>
             {editandoId && (
               <button type="button" className="btn-secundario" onClick={limparFormulario}>
                 Voltar

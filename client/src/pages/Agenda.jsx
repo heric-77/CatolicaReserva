@@ -120,8 +120,9 @@ export default function Agenda({ aoEscolherHorario }) {
             <span className="amostra agenda-ocupada">Ocupada</span> início e fim da reserva
             <span className="amostra agenda-passada">–</span> já passou
           </p>
-          {/* tabIndex permite rolar a tabela pelo teclado em telas pequenas. */}
-          <div className="agenda-rolagem" tabIndex={0} role="region" aria-label="Tabela de horários">
+          {/* Em telas pequenas a tabela rola na horizontal; os navegadores deixam focar
+              a área rolável pelo teclado, e os botões "Livre" também levam até ela. */}
+          <div className="agenda-rolagem" role="region" aria-label="Tabela de horários">
             <table className="agenda">
               <caption>Horários de {formatarDataPorExtenso(data)}</caption>
               <thead>

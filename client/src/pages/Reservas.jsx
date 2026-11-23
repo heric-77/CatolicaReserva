@@ -27,7 +27,7 @@ export default function Reservas({ horarioEscolhido }) {
     }
   }
 
-  useEffect(() => { carregar(); }, []);
+  useEffect(() => { void carregar(); }, []);
 
   async function reservar(dados) {
     setErro('');
@@ -36,7 +36,7 @@ export default function Reservas({ horarioEscolhido }) {
     setAviso('Reserva realizada com sucesso!');
     setInicial({});
     setChaveFormulario((chave) => chave + 1);
-    carregar();
+    await carregar();
   }
 
   async function salvarEdicao(id, dados) {
@@ -45,7 +45,7 @@ export default function Reservas({ horarioEscolhido }) {
     await api.editarReserva(id, dados);
     setAviso('Reserva alterada com sucesso!');
     setEditandoId(null);
-    carregar();
+    await carregar();
   }
 
   async function cancelar(id) {
@@ -55,7 +55,7 @@ export default function Reservas({ horarioEscolhido }) {
     try {
       await api.cancelarReserva(id);
       setAviso('Reserva cancelada.');
-      carregar();
+      await carregar();
     } catch (err) {
       setErro(err.message);
     }
