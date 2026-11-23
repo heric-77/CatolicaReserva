@@ -17,7 +17,7 @@ export default function AdminUsuarios({ usuario: eu }) {
     }
   }
 
-  useEffect(() => { carregar(); }, []);
+  useEffect(() => { void carregar(); }, []);
 
   async function alterarTipo(usuario, tipo) {
     setErro('');
@@ -28,7 +28,7 @@ export default function AdminUsuarios({ usuario: eu }) {
     } catch (err) {
       setErro(err.message);
     }
-    carregar();
+    await carregar();
   }
 
   async function excluir(usuario) {
@@ -39,7 +39,7 @@ export default function AdminUsuarios({ usuario: eu }) {
     try {
       await api.excluirUsuario(usuario.id);
       setAviso('Usuário excluído.');
-      carregar();
+      await carregar();
     } catch (err) {
       setErro(err.message);
     }

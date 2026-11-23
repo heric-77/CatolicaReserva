@@ -1,5 +1,5 @@
 // Formulário de reserva, usado para criar e para editar.
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Mensagens from './Mensagens.jsx';
 import { TIPO_SALA, hojeISO } from '../formatos.js';
 import { validarReserva } from '../validacoes.js';
@@ -11,6 +11,12 @@ export default function FormularioReserva({ salas, inicial = {}, rotulo, aoEnvia
   const [horaFim, setHoraFim] = useState(inicial.horaFim || '');
   const [erro, setErro] = useState('');
   const [enviando, setEnviando] = useState(false);
+  const campoSala = useRef(null);
+
+  // Na edição, leva o foco do teclado para o formulário que acabou de abrir.
+  useEffect(() => {
+    if (focar) campoSala.current.focus();
+  }, [focar]);
 
   // As salas podem chegar depois do formulário aparecer.
   useEffect(() => {
@@ -38,7 +44,7 @@ export default function FormularioReserva({ salas, inicial = {}, rotulo, aoEnvia
     <form onSubmit={enviar} className="formulario" noValidate>
       <label>
         Sala
-        <select value={salaId} onChange={(e) => setSalaId(e.target.value)} autoFocus={focar}>
+        <select value={salaId} onChange={(e) => setSalaId(e.target.value)} ref={campoSala}>
           {salas.map((s) => (
             <option key={s.id} value={s.id}>
               {s.nome} ({TIPO_SALA[s.tipo]})
@@ -66,7 +72,7 @@ export default function FormularioReserva({ salas, inicial = {}, rotulo, aoEnvia
       <Mensagens erro={erro} />
 
       <div className="botoes-formulario">
-        <button className="btn" disabled={enviando || salas.length === 0}>
+        <button type="submit" className="btn" disabled={enviando || salas.length === 0}>
           {enviando ? 'Aguarde...' : rotulo}
         </button>
         {aoDesistir && (

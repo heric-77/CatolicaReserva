@@ -17,10 +17,11 @@ function criarApp({
   usuarioController,
   agendaController,
   autenticar,
+  origemPermitida,
 }) {
   const app = express();
 
-  app.use(cors());
+  app.use(cors({ origin: origemPermitida }));
   app.use(express.json());
 
   // Rota simples para checar se a API está no ar.

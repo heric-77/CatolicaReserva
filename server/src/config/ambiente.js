@@ -11,6 +11,11 @@ module.exports = {
     password: process.env.DB_PASSWORD || '',
     database: process.env.DB_NAME || 'catolicareserva',
   },
+  // Única origem (endereço do cliente web) que o navegador deixa chamar a API.
+  // Em desenvolvimento o Vite repassa /api, então nem chega a ser uma chamada de outra origem.
+  cors: {
+    origem: process.env.CORS_ORIGIN || 'http://localhost:5173',
+  },
   jwt: {
     segredo: process.env.JWT_SECRET || 'troque-este-segredo',
     expiracao: '8h',

@@ -25,7 +25,7 @@ export default function AdminReservas() {
     }
   }
 
-  useEffect(() => { carregar(); }, []);
+  useEffect(() => { void carregar(); }, []);
 
   async function salvarEdicao(id, dados) {
     setErro('');
@@ -33,7 +33,7 @@ export default function AdminReservas() {
     await api.editarReserva(id, dados);
     setAviso('Reserva alterada com sucesso!');
     setEditandoId(null);
-    carregar();
+    await carregar();
   }
 
   async function cancelar(reserva) {
@@ -43,7 +43,7 @@ export default function AdminReservas() {
     try {
       await api.cancelarReserva(reserva.id);
       setAviso('Reserva cancelada.');
-      carregar();
+      await carregar();
     } catch (err) {
       setErro(err.message);
     }
