@@ -1,9 +1,12 @@
-# Qualidade de código com SonarQube — CatólicaReserva
+# Qualidade de código com Sonar — CatólicaReserva
 
 **Integrantes:** Gustavo Schmitt e Heric Moreira Ribeiro
 
-Este documento registra como a análise do SonarQube foi configurada, o que ela apontou no
-projeto (servidor e cliente), o que foi corrigido e como rodar a análise de novo.
+Este documento registra o que a análise do SonarQube apontou no projeto (servidor e cliente),
+o que foi corrigido e como verificar o código hoje com o SonarLint na IDE.
+
+A análise foi feita com um servidor SonarQube local, que depois foi desativado. A verificação
+contínua passou a ser feita pelo SonarLint (SonarQube for IDE), que usa as mesmas regras.
 
 ## 1. Resultado
 
@@ -16,11 +19,13 @@ projeto (servidor e cliente), o que foi corrigido e como rodar a análise de nov
 | Security hotspots | 0 | **0** |
 | Confiabilidade / Segurança / Manutenibilidade | C / C / A | **A / A / A** |
 | Cobertura de testes | 99,7% | **100%** (linhas e ramos) |
-| Linhas duplicadas | 1,6% | 1,6% |
+| Linhas duplicadas | 1,6% | **0%**² |
 
 ¹ Na primeira análise o Quality Gate só avalia "código novo", e ainda não havia nenhum.
+² Medido depois do novo visual, em que a lista de reservas virou um componente só (`ItemReserva`).
 
-Testes automatizados: **128 no servidor** (`node:test`) e **100 no cliente** (Vitest + Testing Library).
+Testes automatizados: **128 no servidor** (`node:test`), **9 de integração** com o MySQL e
+**163 no cliente** (Vitest + Testing Library).
 
 ## 2. O que o Sonar apontou e como foi corrigido
 
@@ -49,29 +54,23 @@ atualizando o `body-parser`/`qs` do servidor e as ferramentas do cliente (Vite 5
 
 **Cliente** (`client/test`):
 - `api.js` (token, erros, sessão expirada), validações e formatos;
-- todas as telas com a API simulada: login e cadastro, reservas, agenda, administração e `App`.
+- todas as telas com a API simulada: login e cadastro, início, salas, agenda, minhas reservas,
+  administração e `App`;
+- componentes: painel de reserva, diálogos de confirmação, avisos e formulários.
 
-Nenhum teste precisa de banco de dados nem do servidor rodando.
+Fora o teste de integração (`npm run test:integracao`), nenhum teste precisa de banco de dados
+nem do servidor rodando.
 
-## 4. Como rodar
+## 4. Como verificar
 
-Pré-requisitos: Docker Desktop aberto e Node.js 20 ou mais novo.
+**Análise com o SonarLint (na IDE):**
 
-```powershell
-# 1. Subir o SonarQube (só na primeira vez; depois basta "docker start sonarqube")
-docker run -d --name sonarqube -p 9000:9000 -e SONAR_ES_BOOTSTRAP_CHECKS_DISABLE=true `
-  -v sonarqube_data:/opt/sonarqube/data -v sonarqube_extensions:/opt/sonarqube/extensions `
-  -v sonarqube_logs:/opt/sonarqube/logs sonarqube:community
+1. Instale a extensão **SonarQube for IDE** (antigo SonarLint) no VS Code:
+   `code --install-extension SonarSource.sonarlint-vscode`.
+2. Abra os arquivos que quer conferir: o SonarLint analisa os arquivos abertos enquanto você edita.
+3. Os alertas aparecem no painel **Problems** (`Ctrl+Shift+M`); com o código atual, ele fica vazio.
 
-# 2. Em http://localhost:9000: entrar (admin/admin), trocar a senha e gerar um token
-#    em My Account > Security. Salvar na raiz do projeto, no arquivo sonar.env:
-#    SONAR_TOKEN=<token>      (o arquivo está no .gitignore)
-
-# 3. Rodar testes + análise
-.\scripts\analisar-sonar.ps1
-```
-
-Para rodar só os testes:
+**Testes e cobertura:**
 
 ```bash
 cd server && npm test            # ou npm run test:coverage

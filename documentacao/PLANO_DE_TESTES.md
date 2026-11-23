@@ -10,7 +10,7 @@ funcionando a cada mudança. Os testes foram divididos em dois níveis:
 | Nível | O que valida | Ferramenta | Onde |
 |---|---|---|---|
 | **Unitário** | Uma regra de negócio ou classe isolada, sem banco (repositórios em memória) | `node:test` (Node.js) / Vitest (React) | `server/test`, `client/test` |
-| **Integração** | Repositórios MySQL + `schema.sql` + regras, gravando e lendo de um **MySQL real** | `node:test` + MySQL 8.4 (Docker) | `server/test/integracao` |
+| **Integração** | Repositórios MySQL + `schema.sql` + regras, gravando e lendo de um **MySQL real** | `node:test` + MySQL 8 | `server/test/integracao` |
 
 A arquitetura em camadas (SOLID) é o que permite isso: os services recebem os repositórios por
 injeção de dependência, então nos testes unitários eles recebem implementações em memória e, no
@@ -65,20 +65,20 @@ Antes dos testes, o banco `catolicareserva_teste` é apagado e recriado com o **
 cd server && npm test
 cd client && npm test
 
-# Teste de integração: sobe um MySQL só para testes (porta 3307) e roda
-docker run -d --name catolicareserva-mysql-teste -p 3307:3306 -e MYSQL_ROOT_PASSWORD=teste mysql:8.4
+# Teste de integração (precisa de um MySQL para testes, ver abaixo)
 cd server && npm run test:integracao
 ```
 
-O teste de integração usa por padrão `localhost:3307`, usuário `root` e senha `teste`. Para outro
-MySQL, defina `TEST_DB_HOST`, `TEST_DB_PORT`, `TEST_DB_USER` e `TEST_DB_PASSWORD`. Ele nunca usa o
-banco `catolicareserva` do desenvolvimento.
+O teste de integração precisa de um MySQL separado só para testes. Por padrão ele usa
+`localhost:3307`, usuário `root` e senha `teste`; para usar outro servidor, defina
+`TEST_DB_HOST`, `TEST_DB_PORT`, `TEST_DB_USER` e `TEST_DB_PASSWORD`. Ele recria o banco
+`catolicareserva_teste` a cada execução e nunca usa o banco `catolicareserva` do desenvolvimento.
 
 ## 5. Resultado da execução
 
 | Conjunto | Testes | Resultado |
 |---|---|---|
 | Unitários — servidor | 128 | ✅ todos passando |
-| Unitários — cliente | 100 | ✅ todos passando |
+| Unitários — cliente | 163 | ✅ todos passando |
 | Integração — MySQL | 9 | ✅ todos passando |
-| Cobertura (SonarQube) | — | 100% das linhas e ramos |
+| Cobertura (`npm run test:coverage`) | — | 100% das linhas e ramos, no servidor e no cliente |

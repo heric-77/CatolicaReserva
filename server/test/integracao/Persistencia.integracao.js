@@ -2,8 +2,10 @@
 // Confere que os repositórios MySQL, o schema.sql e as regras de negócio
 // funcionam juntos: o que o sistema grava é o que ele lê de volta do banco.
 //
-// Precisa de um MySQL de teste (ver documentacao/PLANO_DE_TESTES.md):
-//   docker run -d --name catolicareserva-mysql-teste -p 3307:3306 -e MYSQL_ROOT_PASSWORD=teste mysql:8.4
+// Precisa de um MySQL separado só para testes: por padrão localhost:3307,
+// usuário root e senha teste; outro servidor pode ser indicado pelas variáveis
+// TEST_DB_HOST, TEST_DB_PORT, TEST_DB_USER e TEST_DB_PASSWORD
+// (ver documentacao/PLANO_DE_TESTES.md).
 // Uso: npm run test:integracao
 const { test, describe, before, after, beforeEach } = require('node:test');
 const assert = require('node:assert/strict');

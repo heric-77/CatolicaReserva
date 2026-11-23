@@ -39,8 +39,7 @@ a barra lateral vira uma barra de abas embaixo, com um botão flutuante para res
 CatolicaReserva/
 ├── client/          # Cliente web (React + Vite)
 ├── server/          # Servidor / API REST (Node.js + Express + MySQL)
-├── documentacao/    # Documentação, modelo C4, plano de testes, Sonar e capturas das telas
-└── scripts/         # analisar-sonar.ps1 (testes com cobertura + análise do SonarQube)
+└── documentacao/    # Documentação, modelo C4, plano de testes, Sonar e capturas das telas
 ```
 
 ### Cliente
