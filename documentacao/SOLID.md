@@ -18,8 +18,13 @@ server/src/
 │   ├── contratos/      interfaces (Contrato.js + 12 contratos)
 │   ├── regras/         reserva/ e alteracao/ — uma classe por regra
 │   └── erros.js        DadosInvalidos, NaoEncontrado, Conflito, AcessoNegado, CredenciaisInvalidas
-├── services/           ReservaService, SalaService, UsuarioService (casos de uso)
-├── infra/              MySql*Repository, BcryptGeradorHash, JwtServicoToken
+├── services/           casos de uso:
+│                         ReservaService          criar, editar, cancelar e listar reservas
+│                         SalaService             cadastro, edição e exclusão de salas
+│                         UsuarioService          registro e login
+│                         GestaoDeUsuariosService administração de usuários (tipo e exclusão)
+│                         AgendaService           horários ocupados de todas as salas em uma data
+├── infra/              MySql*Repository, transacao, BcryptGeradorHash, JwtServicoToken
 ├── http/               controllers, rotas, middlewares, apresentadores (formatação do JSON)
 ├── container.js        Composition Root: único lugar que faz "new" das classes concretas
 └── server.js           ponto de entrada
