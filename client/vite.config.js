@@ -11,4 +11,18 @@ export default defineConfig({
       '/api': 'http://localhost:3001',
     },
   },
+  // Testes (Vitest): as telas rodam num navegador simulado (jsdom).
+  test: {
+    environment: 'jsdom',
+    setupFiles: ['./test/setup.js'],
+    mockReset: true,
+    restoreMocks: true,
+    unstubGlobals: true,
+    coverage: {
+      provider: 'v8',
+      include: ['src/**/*.{js,jsx}'],
+      exclude: ['src/main.jsx'],
+      reporter: ['text', 'lcov'],
+    },
+  },
 });

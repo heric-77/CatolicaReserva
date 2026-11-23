@@ -46,13 +46,20 @@ describe('Implementações reais cumprem seus contratos', () => {
 describe('Fakes de teste cumprem os mesmos contratos', () => {
   test('repositórios em memória', () => {
     const reservas = new fakes.ReservaRepositoryEmMemoria();
-    ReservaRepository.verificar(reservas);
-    AgendaDeReservas.verificar(reservas);
-    AgendaDoDia.verificar(reservas);
-    SalaRepository.verificar(new fakes.SalaRepositoryEmMemoria());
-    ConsultaDeSala.verificar(new fakes.SalaRepositoryEmMemoria());
-    UsuarioRepository.verificar(new fakes.UsuarioRepositoryEmMemoria());
-    GestaoDeUsuariosRepository.verificar(new fakes.UsuarioRepositoryEmMemoria());
+    const salas = new fakes.SalaRepositoryEmMemoria();
+    const usuarios = new fakes.UsuarioRepositoryEmMemoria();
+    const pares = [
+      [ReservaRepository, reservas],
+      [AgendaDeReservas, reservas],
+      [AgendaDoDia, reservas],
+      [SalaRepository, salas],
+      [ConsultaDeSala, salas],
+      [UsuarioRepository, usuarios],
+      [GestaoDeUsuariosRepository, usuarios],
+    ];
+    for (const [contrato, fake] of pares) {
+      assert.equal(contrato.verificar(fake), fake);
+    }
   });
 });
 

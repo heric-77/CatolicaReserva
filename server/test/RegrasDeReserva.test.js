@@ -20,7 +20,7 @@ describe('FormatoDeDataEHora', () => {
   const regra = new FormatoDeDataEHora();
 
   test('aceita data e horas válidas', async () => {
-    await regra.validar(reserva());
+    await assert.doesNotReject(regra.validar(reserva()));
   });
 
   test('recusa data que não existe', async () => {
@@ -40,7 +40,7 @@ describe('HorarioDeFuncionamento', () => {
   const regra = new HorarioDeFuncionamento({ abertura: '07:00', fechamento: '22:00' });
 
   test('aceita reserva exatamente entre a abertura e o fechamento', async () => {
-    await regra.validar(reserva({ horaInicio: '07:00', horaFim: '22:00' }));
+    await assert.doesNotReject(regra.validar(reserva({ horaInicio: '07:00', horaFim: '22:00' })));
   });
 
   test('recusa início antes da abertura', async () => {
@@ -56,7 +56,7 @@ describe('LimiteDeDuracao', () => {
   const regra = new LimiteDeDuracao({ maximoEmMinutos: 240 });
 
   test('aceita exatamente o limite', async () => {
-    await regra.validar(reserva({ horaInicio: '08:00', horaFim: '12:00' }));
+    await assert.doesNotReject(regra.validar(reserva({ horaInicio: '08:00', horaFim: '12:00' })));
   });
 
   test('recusa um minuto acima do limite', async () => {
@@ -71,7 +71,7 @@ describe('SemHorarioNoPassado', () => {
   const regra = new SemHorarioNoPassado({ agora });
 
   test('aceita horário futuro no mesmo dia', async () => {
-    await regra.validar(reserva({ horaInicio: '12:01', horaFim: '13:00' }));
+    await assert.doesNotReject(regra.validar(reserva({ horaInicio: '12:01', horaFim: '13:00' })));
   });
 
   test('recusa horário que já começou', async () => {
@@ -87,7 +87,7 @@ describe('AntecedenciaMaxima', () => {
   const regra = new AntecedenciaMaxima({ maximoEmDias: 30, agora });
 
   test('aceita dentro do limite', async () => {
-    await regra.validar(reserva({ data: '2030-07-10', horaInicio: '12:00', horaFim: '13:00' }));
+    await assert.doesNotReject(regra.validar(reserva({ data: '2030-07-10', horaInicio: '12:00', horaFim: '13:00' })));
   });
 
   test('recusa além do limite', async () => {
